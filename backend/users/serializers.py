@@ -10,6 +10,7 @@ class roleserializer(serializers.ModelSerializer):
         fields= ["role_name"]
         
 class userserializer(serializers.ModelSerializer):
+    # role= roleserializer()
     class Meta:
        model=User
        fields= '__all__'
