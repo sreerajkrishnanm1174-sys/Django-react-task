@@ -1,20 +1,64 @@
 from rest_framework.decorators import api_view
+from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import User
-from .serializers import userserializer
+from .serializers import userserializer,RegisterSerializer,LoginSerializer
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.filters import SearchFilter
-
+from rest_framework import status
+from rest_framework.authtoken.models import Token
+from .permissions import IsOwner
 
 # with using Viewset
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
+    def post(self,request):
+        data=request.data
+        serializer=RegisterSerializer(data=data)
+
+        if not serializer.is_valid():
+            return Response({"messages":serializer.errors},status=status.HTTP_404_NOT_FOUND)
+        
+        serializer.save()
+        return Response({"message":"user created "} ,status=status.HTTP_201_CREATED)
+    
+
+class LoginView(APIView):
+    permission_classes = [AllowAny]
+    def post(self,request):
+        data=request.data
+        serializer=LoginSerializer(data=data)
+        if not serializer.is_valid():
+            return Response({"messages":serializer.errors},status=status.HTTP_404_NOT_FOUND)
+        
+        user = serializer.validated_data["user"]
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            "message": "Login successful",
+            "token": token.key
+        }, status=status.HTTP_200_OK)
+
+        
+
+
 
 
 class UserViewset(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated,IsOwner]
     queryset = User.objects.all()
     serializer_class = userserializer
     filter_backends= [SearchFilter]
     search_fields=["username","email","first_name"]
+
+    #role based login
+    def get_queryset(self):
+        # for admin
+        if self.request.user.is_superuser:
+            return User.objects.all()
+        # normal users
+        return User.objects.filter(id=self.request.user.id)
 
     # def list(self, request):
     #     search = request.GET.get("search")
@@ -87,19 +131,6 @@ def userapi(request):
         obj.delete()
         return Response(serializer.data)
     
-
-
-
-
-        
-
-
-        
-
-
-
-
-
 
 
 # def index(request):
