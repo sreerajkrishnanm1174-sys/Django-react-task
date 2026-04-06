@@ -9,4 +9,6 @@ def api_root(request):
         "users": "/api/users/",
         "register": "/api/register/",
         "login": "/api/login/"
+       
+
     })
