@@ -21,10 +21,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     email=serializers.CharField()
     password=serializers.CharField()
     phone = serializers.CharField(max_length=15)
-    
+    bio=serializers.CharField()
+
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'phone']
+        fields = ['username', 'email', 'password', 'phone','bio']
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -44,8 +45,8 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self,validated_data):
         user=User.objects.create(username=validated_data["username"],email=validated_data["email"],phone=validated_data["phone"])
         user.set_password(validated_data["password"])
-        user.save()
-        return validated_data
+        # user.save()
+        return user
         
 class LoginSerializer(serializers.Serializer):
     email = serializers.CharField()

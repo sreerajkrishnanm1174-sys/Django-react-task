@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .models import User
+from .models import User,Profile
 from .serializers import userserializer,RegisterSerializer,LoginSerializer
 from rest_framework.views import APIView
 from rest_framework import viewsets
@@ -12,17 +12,47 @@ from rest_framework.authtoken.models import Token
 from .permissions import IsOwner
 
 # with using Viewset
+from django.db import transaction
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from rest_framework import status
+
 class RegisterView(APIView):
     permission_classes = [AllowAny]
-    def post(self,request):
-        data=request.data
-        serializer=RegisterSerializer(data=data)
+    # atomic view
+    def post(self, request):
+        data = request.data
+        serializer = RegisterSerializer(data=data)
 
         if not serializer.is_valid():
-            return Response({"messages":serializer.errors},status=status.HTTP_404_NOT_FOUND)
-        
-        serializer.save()
-        return Response({"message":"user created "} ,status=status.HTTP_201_CREATED)
+            return Response(
+                {"messages": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            with transaction.atomic():
+
+                # Step 1: Create User
+                user = serializer.save()
+
+                # Step 2: Create Profile (related table)
+                Profile.objects.create(
+                    user=user,
+                    bio=data.get("bio")  # or force error here
+                )
+
+            return Response(
+                {"message": "User and Profile created"},
+                status=status.HTTP_201_CREATED
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
     
 
 class LoginView(APIView):
