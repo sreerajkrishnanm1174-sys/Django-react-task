@@ -33,7 +33,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-     "unfold",  # before django.contrib.admin
+    "unfold",  # before django.contrib.admin
     "unfold.contrib.filters",  # optional, if special filters are needed
     "unfold.contrib.forms",  # optional, if special form elements are needed
     "unfold.contrib.inlines",  # optional, if special inlines are needed
@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'Menu',
     'rest_framework',
     'rest_framework.authtoken',
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
@@ -62,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -155,6 +157,14 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
+
+CORS_ALLOW_HEADERS = [
+    "content-type",
+    "authorization",
+]
 
 UNFOLD = {
     "SITE_TITLE": "Food Admin",
