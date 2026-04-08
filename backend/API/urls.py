@@ -12,10 +12,10 @@ router.register(r'users', UserViewset, basename='users')
 urlpatterns = [
     path('', api_root),
     path('',include(router.urls)),
-    path('userapi/',userapi,name="userapi"),
+    path('userapi/',UserViewset.as_view/(),name="userapi"),
     path('ClassUser/',ClassUser.as_view(),name="ClassUser"),
     path('register/',RegisterView.as_view(),name="register"),
     path('login/',LoginView.as_view(),name="login"),
-    path('show/',ShowMenu,name="show"),
+    path('show/',GetMenuView.as_view(),name="show"),
 
 ]

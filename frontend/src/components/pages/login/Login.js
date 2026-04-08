@@ -1,6 +1,6 @@
 // src/hooks/useLogin.js
 import { useMutation } from "@tanstack/react-query";
-import { ApiFetch } from "../../hooks/fetchapi/ApiFetch";
+import { ApiFetch } from "../../../hooks/fetchapi/ApiFetch";
 
 const useLogin = () => {
   return useMutation({
@@ -12,7 +12,9 @@ const useLogin = () => {
       }),
 
     onSuccess: (data) => {
-      console.log("Login success", data);
+      console.log("Login success",);
+
+      
       // store token here
       localStorage.setItem("token", data.token);
     },

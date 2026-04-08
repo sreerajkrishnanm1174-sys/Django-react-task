@@ -18,41 +18,24 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 
+
 class RegisterView(APIView):
     permission_classes = [AllowAny]
     # atomic view
     def post(self, request):
-        data = request.data
-        serializer = RegisterSerializer(data=data)
+        serializer = RegisterSerializer(data=request.data)
 
-        if not serializer.is_valid():
-            return Response(
-                {"messages": serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            with transaction.atomic():
-
-                # Step 1: Create User
-                user = serializer.save()
-
-                # Step 2: Create Profile (related table)
-                Profile.objects.create(
-                    user=user,
-                    bio=data.get("bio")  # or force error here
-                )
-
+        if serializer.is_valid():
+            serializer.save()
             return Response(
                 {"message": "User and Profile created"},
                 status=status.HTTP_201_CREATED
             )
 
-        except Exception as e:
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        return Response(
+            {"messages": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
     
 
 class LoginView(APIView):
