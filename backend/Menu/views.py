@@ -36,10 +36,10 @@ class GetMenuView(APIView):
     def get(self, request):
         role = getattr(request.user, "role", None)
 
-        if role == "chef":
-            menus = Menu.objects.all()
-            serializer = MenuSerializer(menus, many=True)
-            return Response(serializer.data)
+        
+        menus = Menu.objects.all()
+        serializer = MenuSerializer(menus, many=True)
+        return Response(serializer.data)
 
         return Response(
             {"error": "You have no permission"},

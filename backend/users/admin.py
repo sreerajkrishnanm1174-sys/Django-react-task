@@ -9,6 +9,9 @@ class ProfileInline(admin.StackedInline):
 
 class CustomUserAdmin(UserAdmin):
     inlines = [ProfileInline]
+    fieldsets = UserAdmin.fieldsets + (
+        (None, {'fields': ('phone', 'role')}),
+    )
 
 # admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)

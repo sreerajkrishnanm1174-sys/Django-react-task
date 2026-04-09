@@ -3,7 +3,7 @@ import axios from "axios";
 
 export const ApiFetch = async ({ url, method = "GET", body, headers = {} }) => {
   const token = localStorage.getItem("access");
-
+    
   try {
     const response = await axios({
       url,
@@ -15,6 +15,7 @@ export const ApiFetch = async ({ url, method = "GET", body, headers = {} }) => {
         ...headers,
       },
     });
+    
 
     return response.data;
   } catch (error) {

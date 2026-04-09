@@ -6,13 +6,13 @@ from .views import api_root
 from Menu.views import*
 
 router = DefaultRouter()
-router.register(r'users', UserViewset, basename='users')
+router.register(r'user', UserViewset, basename='user')
 # urlpatterns = router.urls
 
 urlpatterns = [
     path('', api_root),
     path('',include(router.urls)),
-    path('userapi/',UserViewset.as_view/(),name="userapi"),
+    # path('userapi/',UserViewset.as_view/(),name="userapi"),
     path('ClassUser/',ClassUser.as_view(),name="ClassUser"),
     path('register/',RegisterView.as_view(),name="register"),
     path('login/',LoginView.as_view(),name="login"),

@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import LoginInput from "./LoginInput";
 import LoginBtn from "./LoginBtn";
 import useLogin from "./login";
+import { useNavigate } from "react-router-dom";
+import useUser from "../../../hooks/getuser/useUser";
+import userAuthStore from "../../../store/userAuthstore";
 
 function LoginForm() {
+  const navigate = useNavigate();
   const [formData, setFormData] = React.useState({
     username: "",
     password: "",
@@ -11,13 +15,21 @@ function LoginForm() {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-  const { mutate, isPending, isError, error } = useLogin();
+  const { mutate, isPending, isError, error, isSuccess } = useLogin();
+
   const handleSubmit = (e) => {
     e.preventDefault();
     // Handle login logic here
     mutate(formData);
   };
+  const { user, isLoggedIn, logout } = userAuthStore();
+  useEffect(() => {
+    if (!isLoggedIn || !user) return;
 
+    if (user.results[0].role.role_name === "chef") {
+      navigate("/menu");
+    }
+  }, [isLoggedIn, user, navigate]);
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 px-4">
       <form

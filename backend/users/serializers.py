@@ -11,10 +11,10 @@ class roleserializer(serializers.ModelSerializer):
         fields= ["role_name"]
         
 class userserializer(serializers.ModelSerializer):
-    # role= roleserializer()
+    # role= roleserializer()    
     class Meta:
        model=User
-       fields= '__all__'
+       fields= ["id","username","email","phone","role"]
        depth=1
 
 class RegisterSerializer(serializers.ModelSerializer):

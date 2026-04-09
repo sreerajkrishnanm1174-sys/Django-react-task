@@ -1,8 +1,12 @@
 // src/hooks/useLogin.js
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ApiFetch } from "../../../hooks/fetchapi/ApiFetch";
+import userAuthStore from "../../../store/userAuthstore";
+
 
 const useLogin = () => {
+  const queryClient = useQueryClient();
+  const setAuth = userAuthStore((state) => state.setAuth);
   return useMutation({
     mutationFn: (formData) =>
       ApiFetch({
@@ -11,17 +15,28 @@ const useLogin = () => {
         body: formData,
       }),
 
-    onSuccess: (data) => {
-      console.log("Login success",);
+    
+    onSuccess: async (data) => {
+      localStorage.setItem("access", data.access);
+      const token = data.access;
+      // fetch user immediately
+      const user =  await  ApiFetch({
+        url: "http://127.0.0.1:8000/api/user/",
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+     
+      // store in Zustand
+      setAuth({ user, token: localStorage.getItem("access") });
 
+      // trigger refetch of user data 
+      // queryClient.invalidateQueries({ queryKey: ["userdetails"] });
       
-      // store token here
-      localStorage.setItem("token", data.token);
     },
-
-    onError: (error) => {
-      console.error("Login failed", error.message);
-    },
+    // onError: (error) => {
+    // },
   });
 };
 
