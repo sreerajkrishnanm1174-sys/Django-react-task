@@ -1,22 +1,30 @@
 // src/api/apiClient.js
+import axios from "axios";
+
 export const ApiFetch = async ({ url, method = "GET", body, headers = {} }) => {
-  const token = localStorage.getItem("access"); // JWT access token
+  const token = localStorage.getItem("access");
+    
+  try {
+    const response = await axios({
+      url,
+      method,
+      data: body,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...headers,
+      },
+    });
+    
 
-  const response = await fetch(url, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...headers,
-    },
-    body: body ? JSON.stringify(body) : null,
-  });
+    return response.data;
+  } catch (error) {
+    // 🔥 Handle API errors like Django (detail)
+    const message =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      "API Error";
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.detail || data.message || "API Error");
+    throw new Error(message);
   }
-
-  return data;
 };

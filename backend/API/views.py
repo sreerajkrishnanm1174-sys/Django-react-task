@@ -6,7 +6,7 @@ from rest_framework.response import Response
 @permission_classes([AllowAny])
 def api_root(request):
     return Response({
-        "users": "/api/users/",
+        "users": "/api/user/",
         "register": "/api/register/",
         "login": "/api/login/"
        

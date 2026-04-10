@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import User,Role
+from .models import User,Role,Profile
 from django.contrib.auth.hashers import check_password
+from django.db import transaction
 
 
 class roleserializer(serializers.ModelSerializer):
@@ -10,10 +11,10 @@ class roleserializer(serializers.ModelSerializer):
         fields= ["role_name"]
         
 class userserializer(serializers.ModelSerializer):
-    # role= roleserializer()
+    # role= roleserializer()    
     class Meta:
        model=User
-       fields= '__all__'
+       fields= ["id","username","email","phone","role"]
        depth=1
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -42,12 +43,22 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return data
 
-    def create(self,validated_data):
-        user=User.objects.create(username=validated_data["username"],email=validated_data["email"],phone=validated_data["phone"])
-        user.set_password(validated_data["password"])
-        # user.save()
+    def create(self, validated_data):
+        with transaction.atomic():
+            user = User.objects.create_user(
+                username=validated_data["username"],
+                email=validated_data["email"],
+                password=validated_data["password"],
+                phone=validated_data["phone"]
+            )
+
+            Profile.objects.create(
+                user=user,
+                bio=validated_data.get("bio", "")
+            )
+
         return user
-        
+    
 class LoginSerializer(serializers.Serializer):
     email = serializers.CharField()
     password = serializers.CharField(write_only=True)
