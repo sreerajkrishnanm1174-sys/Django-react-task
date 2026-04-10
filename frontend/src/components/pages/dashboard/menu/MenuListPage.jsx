@@ -4,6 +4,7 @@ import { ApiFetch } from "../../../../hooks/fetchapi/ApiFetch";
 import userAuthStore from "../../../../store/userAuthstore";
 
 function MenuListPage() {
+  const {user} = userAuthStore();
   const token = userAuthStore((state) => state.token);
   const { data, isLoading, isError, error, isSuccess } = useQuery({
     queryKey: ["menu-items"],
@@ -17,7 +18,6 @@ function MenuListPage() {
       }),
     enabled: !!token,
   });
-
   if (isLoading) return <p className="text-center text-amber-700 italic mt-10">Loading menu...</p>;
   if (isError) return <p className="text-center text-red-500 mt-10">{error.message}</p>;
 

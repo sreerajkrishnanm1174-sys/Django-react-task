@@ -3,11 +3,11 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import LoginPage from "./components/pages/login/LoginPage";
 import SignUpPage from "./components/pages/registration/SignUpPage";
 import LandingPage from "./components/pages/landingPage/LandingPage";
-import CategoriesPage from "./components/pages/dashboard/menu/CategoriesPage";
-import AddItemPage from "./components/pages/dashboard/menu/AddItemPage";
+
 import MenuListPage from "./components/pages/dashboard/menu/MenuListPage";
 import Menu from "./components/pages/dashboard/menu/Menu";
-
+import RoleProtectedRoute from "./routes/RoleProtectedRoute";
+import AddMenu from "./components/pages/dashboard/menu/AddMenu";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -22,15 +22,23 @@ function App() {
           <Route path="/register" element={<SignUpPage />} />
 
           {/* Dashboard layout */}
-          <Route path="/menu" element={<Menu />}>
-            <Route path="categories" element={<CategoriesPage />} />
-            <Route path="add-item" element={<AddItemPage />} />
+          <Route
+            path="/menu"
+            element={
+              <RoleProtectedRoute allowedRoles={["chef"]}>
+                <Menu />
+              </RoleProtectedRoute>
+            }
+          >
+            {/* <Route path="categories" element={<CategoriesPage />} /> */}
+            <Route path="add-menu" element={<AddMenu />} />
             <Route path="list" element={<MenuListPage />} />
 
             {/* default page */}
             <Route index element={<MenuListPage />} />
           </Route>
         </Routes>
+        
       </BrowserRouter>
     </>
   );

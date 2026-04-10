@@ -1,21 +1,41 @@
 import React from 'react'
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
-const userAuthStore = create((set) => ({
-  user: null,
-  token: localStorage.getItem("access") || null, // ✅ restore on reload
+const userAuthStore = create(
+  persist(
+    (set) => ({
+      user: null,
+      token: null,
+      isLoggedIn: false,
 
-  isLoggedIn: !!localStorage.getItem("access"), // ✅ restore on reload 
+      setAuth: ({ user, token }) => {
+        set({
+          user,
+          token,
+          isLoggedIn: true,
+        });
+      },
 
-  setAuth: ({ user, token }) => { // ✅ FIXED
-    localStorage.setItem("access", token);
-    set({ user, token, isLoggedIn: true });
-  },
+      logout: () => {
+        set({
+          user: null,
+          token: null,
+          isLoggedIn: false,
+        });
+      },
+    }),
+    {
+      name: "auth-storage", // key in localStorage
 
-  logout: () => {
-    localStorage.removeItem("access");
-    set({ user: null, token: null, isLoggedIn: false });
-  },
-}));
+      // ✅ Optional: persist only required fields
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        isLoggedIn: state.isLoggedIn,
+      }),
+    }
+  )
+);
 
 export default userAuthStore;

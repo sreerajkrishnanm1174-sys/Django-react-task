@@ -17,5 +17,8 @@ urlpatterns = [
     path('register/',RegisterView.as_view(),name="register"),
     path('login/',LoginView.as_view(),name="login"),
     path('show/',GetMenuView.as_view(),name="show"),
+    path('menu-create/', CreateMenuView.as_view(), name='menu-create'),
+    path('items/', ItemListView.as_view(), name='items-list'),
+    path('categories/', CategoryListView.as_view(), name='categories-list'),
 
 ]
