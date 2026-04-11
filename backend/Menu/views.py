@@ -34,20 +34,24 @@ from rest_framework import generics
 
 class GetMenuView(APIView):
     permission_classes = [IsAuthenticated]
-
+ 
     def get(self, request):
-        role = getattr(request.user, "role", None)
-
-        
-        menus = Menu.objects.all()
+        date = request.query_params.get("date")  # e.g. ?date=2026-04-11
+ 
+        menus = Menu.objects.all().order_by("-date", "-version")
+ 
+        if date:
+            menus = menus.filter(date=date)
+ 
+        if not menus.exists():
+            return Response(
+                {"detail": "No menus found for the given date."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+ 
         serializer = MenuSerializer(menus, many=True)
         return Response(serializer.data)
-
-        return Response(
-            {"error": "You have no permission"},
-            status=status.HTTP_403_FORBIDDEN
-        )
-
+ 
 class CreateMenuView(APIView):
     def post(self, request):
         serializer = MenuCreateSerializer(data=request.data)
@@ -77,7 +81,7 @@ class CategoryListView(generics.ListAPIView):
         if menu_id:
             queryset = queryset.filter(menu_id=menu_id)
 
-        return queryset.order_by('display_order')
+        return queryset.order_by("menu", "name" )
 
 
 

@@ -1,13 +1,21 @@
-# serializers.py
-
 from rest_framework import serializers
-from django.db import transaction
-from .models import *
+from .models import Menu, MenuCategory, MenuItem, MenuItemPrice
+
+
+# ── READ serializers ────────────────────────────────────────────
+
+class MenuItemPriceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MenuItemPrice
+        fields = ['id', 'quantity', 'price']
+
 
 class MenuItemsSerializer(serializers.ModelSerializer):
+    prices = MenuItemPriceSerializer(many=True, read_only=True)
+
     class Meta:
         model = MenuItem
-        fields = ['id', 'name', 'price', 'is_available', 'is_veg']
+        fields = ['id', 'name', 'is_available', 'is_veg', 'prices']
 
 
 class MenuCategoriesSerializer(serializers.ModelSerializer):
@@ -15,7 +23,7 @@ class MenuCategoriesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MenuCategory
-        fields = ['id', 'name', 'display_order', 'items']
+        fields = ['id', 'name', 'items']
 
 
 class MenuSerializer(serializers.ModelSerializer):
@@ -26,22 +34,36 @@ class MenuSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'date', 'version', 'is_active', 'categories']
 
 
-class MenuCreateItemSerializer(serializers.ModelSerializer):
+# ── WRITE serializers ───────────────────────────────────────────
+
+class MenuItemPriceCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MenuItemPrice
+        fields = ['quantity', 'price']
+
+
+class MenuItemCreateSerializer(serializers.ModelSerializer):
+    prices = MenuItemPriceCreateSerializer(many=True)
+
     class Meta:
         model = MenuItem
-        fields = ['name', 'price', 'is_available', 'is_veg']
+        fields = ['name', 'is_veg', 'is_available', 'prices']
 
 
-class MenuCreateCategorySerializer(serializers.ModelSerializer):
-    items = MenuCreateItemSerializer(many=True)
+class MenuCategoryCreateSerializer(serializers.ModelSerializer):
+    items = MenuItemCreateSerializer(many=True)
+    is_new = serializers.BooleanField(write_only=True)
+    existing_id = serializers.IntegerField(
+        write_only=True, required=False, allow_null=True
+    )
 
     class Meta:
         model = MenuCategory
-        fields = ['name', 'display_order', 'items']
+        fields = ['name', 'is_new', 'existing_id', 'items']
 
 
 class MenuCreateSerializer(serializers.ModelSerializer):
-    categories = MenuCreateCategorySerializer(many=True)
+    categories = MenuCategoryCreateSerializer(many=True)
 
     class Meta:
         model = Menu
@@ -54,15 +76,35 @@ class MenuCreateSerializer(serializers.ModelSerializer):
 
         for cat_data in categories_data:
             items_data = cat_data.pop('items', [])
+            cat_data.pop('is_new', None)
+            cat_data.pop('existing_id', None)
 
-            category = MenuCategory.objects.create(
-                menu=menu,
-                **cat_data
-            )
+            category = MenuCategory.objects.create(menu=menu, **cat_data)
 
-            MenuItem.objects.bulk_create([
-                MenuItem(category=category, **item)
-                for item in items_data
-            ])
+            for item_data in items_data:
+                prices_data = item_data.pop('prices', [])
+
+                menu_item, _ = MenuItem.objects.get_or_create(
+                    name=item_data['name'],
+                    defaults={
+                        'category':     category,
+                        'is_veg':       item_data.get('is_veg', False),
+                        'is_available': item_data.get('is_available', True),
+                    }
+                )
+
+                menu_item.category     = category
+                menu_item.is_available = item_data.get('is_available', True)
+                menu_item.save(update_fields=['category', 'is_available'])
+
+                for price_data in prices_data:
+                    if not price_data.get('quantity', '').strip():
+                        continue
+
+                    MenuItemPrice.objects.update_or_create(
+                        item=menu_item,
+                        quantity=price_data['quantity'].strip(),
+                        defaults={'price': price_data['price']},
+                    )
 
         return menu

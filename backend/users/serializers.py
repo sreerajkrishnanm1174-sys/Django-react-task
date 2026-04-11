@@ -10,11 +10,17 @@ class roleserializer(serializers.ModelSerializer):
         model=Role
         fields= ["role_name"]
         
+class profileserializer(serializers.ModelSerializer):
+
+    class Meta:
+        model=Profile
+        fields= ["bio"]
+                
 class userserializer(serializers.ModelSerializer):
-    # role= roleserializer()    
+    profile = profileserializer(read_only=True)
     class Meta:
        model=User
-       fields= ["id","username","email","phone","role"]
+       fields= ["id","username","email","phone","role","profile"]
        depth=1
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -70,7 +76,7 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError({"user": "User does not exist"})
 
         if not check_password(data["password"], user.password):
-            raise serializers.ValidationError({"password": "Wrong credentials"})
+            raise serializers.ValidationError({"password": "Wrong password  "})
 
         return {
             "user": user

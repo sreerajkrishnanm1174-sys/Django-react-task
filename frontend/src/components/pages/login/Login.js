@@ -9,22 +9,17 @@ const useLogin = () => {
   return useMutation({
     mutationFn: (formData) =>
       ApiFetch({
-        url: "http://127.0.0.1:8000/api/token/",
+        url: "http://127.0.0.1:8000/api/login/",
         method: "POST",
         body: formData,
+        headers: {}
       }),
 
     onSuccess: async (data) => {
-      const token = data.access;
-      localStorage.setItem("access", token);
-
-      const user = await ApiFetch({
-        url: "http://127.0.0.1:8000/api/user/",
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const token = data?.access; // Adjust based on your API response structure
+      const user = data?.user; // Adjust based on your API response structure
+      // console.log("Login successful:",data);
+ 
 
       setAuth({ user, token });
 

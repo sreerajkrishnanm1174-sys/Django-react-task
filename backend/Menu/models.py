@@ -40,11 +40,11 @@ class MenuCategory(models.Model):
         on_delete=models.CASCADE,
         related_name='categories'
     )
-    name = models.CharField(max_length=100)
-    display_order = models.PositiveIntegerField(default=0)
+    name = models.CharField(max_length=100,unique=True)
+   
 
     class Meta:
-        ordering = ['display_order']
+        
         unique_together = ['menu', 'name']
 
     def __str__(self):
@@ -57,11 +57,29 @@ class MenuItem(models.Model):
         related_name='items'
     )
 
-    name = models.CharField(max_length=150)
-    price = models.DecimalField(max_digits=8, decimal_places=2)
+    name = models.CharField(max_length=150,unique=True)
+    
 
     is_available = models.BooleanField(default=True)
     is_veg = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
+    
+class MenuItemPrice(models.Model):
+    item = models.ForeignKey(
+        MenuItem,
+        on_delete=models.CASCADE,
+        related_name='prices'
+    )
+
+    quantity = models.CharField(max_length=50)  
+    # examples: "Half", "Full", "1 Plate", "500g"
+
+    price = models.DecimalField(max_digits=8, decimal_places=2)
+
+    class Meta:
+        unique_together = ['item', 'quantity']  # prevent duplicate quantity
+
+    def __str__(self):
+        return f"{self.item.name} - {self.quantity} - {self.price}"

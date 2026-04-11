@@ -1,14 +1,86 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { ApiFetch } from "../../../../hooks/fetchapi/ApiFetch";
 import SectionDivider from "../../../ui/menu ui/SectionDivider";
 import Field from "../../../ui/menu ui/Field";
 import SearchCreateDropdown from "../../../ui/menu ui/SearchCreateDropdown";
+import userAuthStore from "../../../../store/userAuthstore";
 
+// ── Helper: empty price row ─────────────────────────────────────
+const newPrice = () => ({ id: Date.now() + Math.random(), quantity: "", price: "" });
 
-// ── Main: AddMenu ─────────────────────────────────────────────
+// ── Helper: empty item ──────────────────────────────────────────
+const newItem = () => ({
+  id: Date.now() + Math.random(),
+  name: "",
+  isNew: false,
+  is_veg: false,
+  is_available: true,
+  prices: [newPrice()],
+});
+
+// ── PriceRows: renders quantity/price pairs for one item ────────
+function PriceRows({ prices, onAdd, onRemove, onChange }) {
+  return (
+    <div className="col-span-full">
+      {prices.map((p, pi) => (
+        <div
+          key={p.id}
+          className="grid gap-0"
+          style={{ gridTemplateColumns: "1fr 110px 110px 32px" }}
+        >
+          <input
+            className="border-t border-r border-gray-200 px-3 py-1.5 text-xs text-black bg-transparent outline-none placeholder-gray-400 focus:bg-[#fffbe8]"
+            placeholder='e.g. Half, Full, 500g'
+            value={p.quantity}
+            onChange={(e) => onChange(pi, "quantity", e.target.value)}
+          />
+          <input
+            type="number"
+            className="border-t border-r border-gray-200 px-3 py-1.5 text-xs text-black text-right bg-transparent outline-none placeholder-gray-400 focus:bg-[#fffbe8]"
+            placeholder="₹ 0"
+            value={p.price}
+            onChange={(e) => onChange(pi, "price", e.target.value)}
+          />
+          {/* spacer to align with Veg/Non-veg column */}
+          <div className="border-t border-r border-gray-200" />
+          <button
+            type="button"
+            onClick={() => onRemove(pi)}
+            className={`border-t border-gray-200 flex items-center justify-center text-base transition-colors ${
+              prices.length > 1
+                ? "text-gray-400 hover:text-red-600"
+                : "text-gray-200 cursor-default"
+            }`}
+          >
+            ×
+          </button>
+        </div>
+      ))}
+
+      {/* Add price row */}
+      <div
+        className="grid border-t border-gray-200"
+        style={{ gridTemplateColumns: "1fr 110px 110px 32px" }}
+      >
+        <div className="col-span-4 px-3 py-1 bg-[#f7f0e0]">
+          <button
+            type="button"
+            onClick={onAdd}
+            className="text-[11px] text-[#b8955a] font-medium hover:underline"
+          >
+            + Add quantity / price
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main: AddMenu ───────────────────────────────────────────────
 function AddMenu() {
   const today = new Date().toISOString().split("T")[0];
+  const { token } = userAuthStore();
 
   const [menu, setMenu] = useState({
     name: "",
@@ -28,22 +100,15 @@ function AddMenu() {
       ApiFetch({
         url: "http://127.0.0.1:8000/api/categories/",
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access")}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       }),
   });
-  console.log("Existing categories:", existingCategories.results);
+
   // ── Category helpers ──
   const addCategory = () =>
     setCategories((prev) => [
       ...prev,
-      {
-        id: Date.now(),
-        selectedCat: null,
-        display_order: prev.length,
-        items: [],
-      },
+      { id: Date.now(), selectedCat: null, display_order: prev.length, items: [] },
     ]);
 
   const removeCategory = (ci) =>
@@ -55,48 +120,41 @@ function AddMenu() {
       updated[ci].selectedCat = cat;
       updated[ci].items =
         cat.isNew || !cat.items?.length
-          ? [
-              {
-                id: Date.now(),
-                name: "",
-                price: "",
-                is_veg: false,
-                is_available: true,
-              },
-            ]
-          : cat.items.map((name, i) => ({
-              id: Date.now() + i,
-              name: typeof name === "string" ? name : name.name,
-              price: name.price ?? "",
-              is_veg: name.is_veg ?? false,
+          ? [newItem()]
+          : cat.items.map((src) => ({
+              id: Date.now() + Math.random(),
+              name: typeof src === "string" ? src : src.name,
+              isNew: false,
+              is_veg: src.is_veg ?? false,
               is_available: true,
+              // Map existing prices array or fall back to single price field
+              prices:
+                src.prices?.length
+                  ? src.prices.map((p) => ({
+                      id: Date.now() + Math.random(),
+                      quantity: p.quantity ?? "",
+                      price: p.price ?? "",
+                    }))
+                  : [{ id: Date.now() + Math.random(), quantity: "", price: src.price ?? "" }],
             }));
       return updated;
     });
   };
 
-  const updateCategoryOrder = (ci, val) => {
+  const updateCategoryOrder = (ci, val) =>
     setCategories((prev) => {
       const updated = [...prev];
       updated[ci].display_order = val;
       return updated;
     });
-  };
 
   // ── Item helpers ──
-  const addItem = (ci) => {
+  const addItem = (ci) =>
     setCategories((prev) => {
       const updated = [...prev];
-      updated[ci].items.push({
-        id: Date.now(),
-        name: "",
-        price: "",
-        is_veg: false,
-        is_available: true,
-      });
+      updated[ci].items.push(newItem());
       return [...updated];
     });
-  };
 
   const removeItem = (ci, ii) => {
     if (categories[ci].items.length <= 1) return;
@@ -107,13 +165,36 @@ function AddMenu() {
     });
   };
 
-  const updateItem = (ci, ii, key, val) => {
+  const updateItem = (ci, ii, key, val) =>
     setCategories((prev) => {
       const updated = [...prev];
       updated[ci].items[ii][key] = val;
       return [...updated];
     });
+
+  // ── Price helpers (per item) ──
+  const addPrice = (ci, ii) =>
+    setCategories((prev) => {
+      const updated = [...prev];
+      updated[ci].items[ii].prices.push(newPrice());
+      return [...updated];
+    });
+
+  const removePrice = (ci, ii, pi) => {
+    if (categories[ci].items[ii].prices.length <= 1) return;
+    setCategories((prev) => {
+      const updated = [...prev];
+      updated[ci].items[ii].prices.splice(pi, 1);
+      return [...updated];
+    });
   };
+
+  const updatePrice = (ci, ii, pi, key, val) =>
+    setCategories((prev) => {
+      const updated = [...prev];
+      updated[ci].items[ii].prices[pi][key] = val;
+      return [...updated];
+    });
 
   // ── Submit ──
   const mutation = useMutation({
@@ -122,42 +203,42 @@ function AddMenu() {
         url: "http://127.0.0.1:8000/api/menu-create/",
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access")}`,
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          
         },
-        body: JSON.stringify({
+        body: {
           name: menu.name,
           date: menu.date,
           version: menu.version,
           is_active: menu.is_active,
           categories: categories.map((c) => ({
             name: c.selectedCat?.name ?? "",
-            display_order: c.display_order,
+           
             is_new: c.selectedCat?.isNew ?? false,
-            existing_id: c.selectedCat?.isNew
-              ? null
-              : (c.selectedCat?.id ?? null),
+            existing_id: c.selectedCat?.isNew ? null : (c.selectedCat?.id ?? null),
             items: c.items.map((item) => ({
               name: item.name,
-              price: item.price,
               is_veg: item.is_veg,
               is_available: item.is_available,
+              // Quantity-based prices array — maps to MenuItemPrice model
+              prices: item.prices
+                .filter((p) => p.quantity.trim() !== "" || p.price !== "")
+                .map((p) => ({
+                  quantity: p.quantity.trim(),
+                  price: p.price,
+                })),
             })),
           })),
-        }),
+        }
       }),
     onSuccess: () => {
       alert("Menu published successfully!");
-      // Reset form
       setMenu({ name: "", date: today, version: 1, is_active: true });
-      setCategories([
-        { id: Date.now(), selectedCat: null, display_order: 0, items: [] },
-      ]);
+      setCategories([{ id: Date.now(), selectedCat: null, display_order: 0, items: [] }]);
     },
     onError: (err) => alert("Error: " + err.message),
   });
 
-  // ── Shared input class ──
   const inp =
     "w-full px-3 py-2 bg-white border border-gray-400 rounded text-sm text-black placeholder-gray-400 outline-none focus:border-[#b8955a] focus:ring-2 focus:ring-[#b8955a]/15 transition-colors";
 
@@ -216,9 +297,7 @@ function AddMenu() {
               className={inp}
               min={1}
               value={menu.version}
-              onChange={(e) =>
-                setMenu({ ...menu, version: Number(e.target.value) })
-              }
+              onChange={(e) => setMenu({ ...menu, version: Number(e.target.value) })}
             />
           </Field>
         </div>
@@ -230,18 +309,14 @@ function AddMenu() {
             checked={menu.is_active}
             onChange={(e) => setMenu({ ...menu, is_active: e.target.checked })}
           />
-          <span className="text-sm text-black font-medium">
-            Mark as active menu
-          </span>
+          <span className="text-sm text-black font-medium">Mark as active menu</span>
         </label>
 
         {/* ── Categories & Items ── */}
         <SectionDivider label="Categories & items" />
 
         {catsLoading && (
-          <p className="text-sm text-gray-500 italic mb-3">
-            Loading existing categories...
-          </p>
+          <p className="text-sm text-gray-500 italic mb-3">Loading existing categories...</p>
         )}
 
         {categories.map((cat, ci) => (
@@ -254,7 +329,7 @@ function AddMenu() {
               <div className="flex-1">
                 <SearchCreateDropdown
                   value={cat.selectedCat}
-                  options={ existingCategories.results}
+                  options={existingCategories.results}
                   placeholder="Select or create a category"
                   onChange={(selected) => selectCategory(ci, selected)}
                 />
@@ -283,16 +358,13 @@ function AddMenu() {
                 {/* Table column headers */}
                 <div
                   className="grid bg-[#e0d0b0] border-b border-gray-300"
-                  style={{ gridTemplateColumns: "1fr 90px 90px 32px" }}
+                  style={{ gridTemplateColumns: "1fr 110px 110px 32px" }}
                 >
-                  {["Item name", "Price ₹", "Type", ""].map((h, i) => (
+                  {["Item name", "Quantity", "Price ₹", ""].map((h, i) => (
                     <div
                       key={i}
                       className="px-3 py-1.5 text-xs tracking-wider uppercase text-black font-semibold"
-                      style={{
-                        textAlign:
-                          i === 1 ? "right" : i === 2 ? "center" : "left",
-                      }}
+                      style={{ textAlign: i === 2 ? "right" : "left" }}
                     >
                       {h}
                     </div>
@@ -303,60 +375,143 @@ function AddMenu() {
                 {cat.items.map((item, ii) => (
                   <div
                     key={item.id}
-                    className={`grid border-b border-gray-200 last:border-none ${
+                    className={`border-b border-gray-200 last:border-none ${
                       ii % 2 === 0 ? "bg-white" : "bg-[#faf5ee]"
                     }`}
-                    style={{ gridTemplateColumns: "1fr 90px 90px 32px" }}
                   >
-                    <div className="border-r border-gray-200 px-1 py-1">
-                      <SearchCreateDropdown
-                        value={item}
-                        options={cat.selectedCat?.items || []}
-                        placeholder="Select or create item"
-                        onChange={(selected) => {
-                          updateItem(ci, ii, "name", selected.name);
-                          updateItem(ci, ii, "isNew", selected.isNew || false);
-                        }}
-                      />
-                    </div>
-                    <input
-                      type="number"
-                      className="border-r border-gray-200 px-3 py-2 text-sm text-black text-right bg-transparent outline-none placeholder-gray-400 focus:bg-[#fffbe8]"
-                      placeholder="0"
-                      value={item.price}
-                      onChange={(e) =>
-                        updateItem(ci, ii, "price", e.target.value)
-                      }
-                    />
-                    <button
-                      type="button"
-                      onClick={() => updateItem(ci, ii, "is_veg", !item.is_veg)}
-                      className={`text-xs flex items-center justify-center border-r border-gray-200 font-semibold transition-colors
-                        ${
-                          item.is_veg
-                            ? "bg-[#d4f0df] text-[#0a4a22]"
-                            : "bg-[#fde0e0] text-[#6a0a0a]"
-                        }`}
+                    {/* Item name row + veg toggle + remove */}
+                    <div
+                      className="grid"
+                      style={{ gridTemplateColumns: "1fr 110px 110px 32px" }}
                     >
-                      <span
-                        className={`w-2 h-2 rounded-full mr-1.5 flex-shrink-0 ${
-                          item.is_veg ? "bg-green-500" : "bg-red-500"
-                        }`}
+                      {/* Name */}
+                      <div className="border-r border-gray-200 px-1 py-1">
+                        <SearchCreateDropdown
+                          value={item}
+                          options={cat.selectedCat?.items || []}
+                          placeholder="Select or create item"
+                          onChange={(selected) => {
+                            updateItem(ci, ii, "name", selected.name);
+                            updateItem(ci, ii, "isNew", selected.isNew || false);
+                            // Prefill prices if the selected item has existing prices
+                            if (selected.prices?.length) {
+                              updateItem(
+                                ci,
+                                ii,
+                                "prices",
+                                selected.prices.map((p) => ({
+                                  id: Date.now() + Math.random(),
+                                  quantity: p.quantity ?? "",
+                                  price: p.price ?? "",
+                                }))
+                              );
+                            }
+                          }}
+                        />
+                      </div>
+
+                      {/* Quantity label for first price row (shown inline) */}
+                      <input
+                        className="border-r border-gray-200 px-3 py-2 text-sm text-black bg-transparent outline-none placeholder-gray-400 focus:bg-[#fffbe8]"
+                        placeholder='Half / Full…'
+                        value={item.prices[0]?.quantity ?? ""}
+                        onChange={(e) => updatePrice(ci, ii, 0, "quantity", e.target.value)}
                       />
-                      {item.is_veg ? "Veg" : "Non-veg"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeItem(ci, ii)}
-                      className={`flex items-center justify-center text-lg transition-colors
-                        ${
+
+                      {/* Price for first row */}
+                      <input
+                        type="number"
+                        className="border-r border-gray-200 px-3 py-2 text-sm text-black text-right bg-transparent outline-none placeholder-gray-400 focus:bg-[#fffbe8]"
+                        placeholder="0"
+                        value={item.prices[0]?.price ?? ""}
+                        onChange={(e) => updatePrice(ci, ii, 0, "price", e.target.value)}
+                      />
+
+                      {/* Remove item */}
+                      <button
+                        type="button"
+                        onClick={() => removeItem(ci, ii)}
+                        className={`flex items-center justify-center text-lg transition-colors ${
                           cat.items.length > 1
                             ? "text-gray-400 hover:text-red-600"
                             : "text-gray-200 cursor-default"
                         }`}
+                      >
+                        ×
+                      </button>
+                    </div>
+
+                    {/* Additional price rows (index 1+) */}
+                    {item.prices.slice(1).map((p, relIdx) => {
+                      const pi = relIdx + 1;
+                      return (
+                        <div
+                          key={p.id}
+                          className="grid"
+                          style={{ gridTemplateColumns: "1fr 110px 110px 32px" }}
+                        >
+                          {/* empty cell to align under "Item name" */}
+                          <div className="border-r border-gray-200 px-3 py-1 text-xs text-gray-400 italic">
+                            ↳ variant
+                          </div>
+                          <input
+                            className="border-r border-gray-200 px-3 py-1.5 text-xs text-black bg-transparent outline-none placeholder-gray-400 focus:bg-[#fffbe8]"
+                            placeholder='Quantity'
+                            value={p.quantity}
+                            onChange={(e) => updatePrice(ci, ii, pi, "quantity", e.target.value)}
+                          />
+                          <input
+                            type="number"
+                            className="border-r border-gray-200 px-3 py-1.5 text-xs text-black text-right bg-transparent outline-none placeholder-gray-400 focus:bg-[#fffbe8]"
+                            placeholder="0"
+                            value={p.price}
+                            onChange={(e) => updatePrice(ci, ii, pi, "price", e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removePrice(ci, ii, pi)}
+                            className="flex items-center justify-center text-base text-gray-400 hover:text-red-600 transition-colors"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+
+                    {/* Veg toggle + add-price in the same footer strip */}
+                    <div
+                      className="grid border-t border-gray-100"
+                      style={{ gridTemplateColumns: "1fr 110px 110px 32px" }}
                     >
-                      ×
-                    </button>
+                      {/* Veg toggle */}
+                      <button
+                        type="button"
+                        onClick={() => updateItem(ci, ii, "is_veg", !item.is_veg)}
+                        className={`text-xs flex items-center px-3 py-1 font-semibold transition-colors ${
+                          item.is_veg
+                            ? "bg-[#d4f0df] text-[#0a4a22]"
+                            : "bg-[#fde0e0] text-[#6a0a0a]"
+                        }`}
+                      >
+                        <span
+                          className={`w-2 h-2 rounded-full mr-1.5 flex-shrink-0 ${
+                            item.is_veg ? "bg-green-500" : "bg-red-500"
+                          }`}
+                        />
+                        {item.is_veg ? "Veg" : "Non-veg"}
+                      </button>
+
+                      {/* Add variant price button */}
+                      <div className="col-span-3 px-3 py-1 bg-[#f7f0e0] flex items-center">
+                        <button
+                          type="button"
+                          onClick={() => addPrice(ci, ii)}
+                          className="text-[11px] text-[#b8955a] font-medium hover:underline"
+                        >
+                          + Add quantity variant
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ))}
 
@@ -399,11 +554,9 @@ function AddMenu() {
           {mutation.isPending ? "Publishing..." : "Publish Menu"}
         </button>
 
-        {/* Error message */}
         {mutation.isError && (
           <p className="mt-3 text-sm text-red-600 text-center font-medium">
-            {mutation.error?.message ??
-              "Something went wrong. Please try again."}
+            {mutation.error?.message ?? "Something went wrong. Please try again."}
           </p>
         )}
       </div>

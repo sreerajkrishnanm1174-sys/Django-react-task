@@ -3,6 +3,7 @@ import userAuthStore from "../store/userAuthstore";
 
 const RoleProtectedRoute = ({ children, allowedRoles }) => {
   const { isLoggedIn, user } = userAuthStore();
+  console.log("RoleProtectedRoute - User:", user, "IsLoggedIn:", isLoggedIn);
   const location = useLocation();
 
   if (!isLoggedIn || !user) {
@@ -11,7 +12,7 @@ const RoleProtectedRoute = ({ children, allowedRoles }) => {
   if (!user) {
     return <div>Loading...</div>; // wait
   }
-  const role = user?.results?.[0]?.role?.role_name;
+  const role = user?.role?.role_name;
 
   if (!allowedRoles.includes(role)) {
     return <Navigate to="/unauthorized" replace />;

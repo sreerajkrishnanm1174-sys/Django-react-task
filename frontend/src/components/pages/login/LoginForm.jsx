@@ -8,7 +8,7 @@ import { useLocation, Link } from "react-router-dom";
 function LoginForm() {
   const navigate = useNavigate();
   const [formData, setFormData] = React.useState({
-    username: "",
+    email: "",
     password: "",
   });
   const handleChange = (e) => {
@@ -24,7 +24,7 @@ function LoginForm() {
     mutate(formData, {
       onSuccess: () => {
         const state = userAuthStore.getState();
-        const role = state.user?.results?.[0]?.role?.role_name;
+        const role = state.user?.role?.role_name;
 
         const from = location.state?.from?.pathname;
 
@@ -58,14 +58,15 @@ function LoginForm() {
           </p>
         </div>
 
-        {/* Username */}
+        {/* email */}
         <LoginInput
-          label="Username"
-          name="username"
-          value={formData.username}
+          label="email"
+          name="email"
+          value={formData.email}
+          type="email"
           onChange={handleChange}
-          placeholder="Enter your username"
-          autoComplete="username"
+          placeholder="Enter your email"
+          autoComplete="email"
         />
 
         {/* Password */}

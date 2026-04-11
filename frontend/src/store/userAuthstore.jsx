@@ -10,6 +10,7 @@ const userAuthStore = create(
       isLoggedIn: false,
 
       setAuth: ({ user, token }) => {
+        // console.log("Setting auth:", { user, token });
         set({
           user,
           token,
