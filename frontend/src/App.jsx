@@ -8,6 +8,8 @@ import MenuListPage from "./components/pages/dashboard/menu/MenuListPage";
 import Menu from "./components/pages/dashboard/menu/Menu";
 import RoleProtectedRoute from "./routes/RoleProtectedRoute";
 import AddMenu from "./components/pages/dashboard/menu/AddMenu";
+import OrderDashboard from "./components/pages/dashboard/orders/OrderDashboard";
+import CreateOrder from "./components/pages/dashboard/orders/CreateOrder";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -36,6 +38,14 @@ function App() {
 
             {/* default page */}
             <Route index element={<MenuListPage />} />
+          </Route>
+
+          <Route path="/orders" element={
+            <OrderDashboard />
+         
+          }>
+            <Route path="create-order" element={<CreateOrder />} />
+            {/* <Route path="/orders/view" element={<ViewOrders />} /> */}
           </Route>
         </Routes>
         

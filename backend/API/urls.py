@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
+from orders.views import OrderViewSet
 from users.views import UserViewset, userapi, ClassUser, RegisterView, LoginView
 from .views import api_root
 from Menu.views import*
@@ -20,5 +21,7 @@ urlpatterns = [
     path('menu-create/', CreateMenuView.as_view(), name='menu-create'),
     path('items/', ItemListView.as_view(), name='items-list'),
     path('categories/', CategoryListView.as_view(), name='categories-list'),
+
+    path('orders/', OrderViewSet.as_view({'get': 'list', 'post': 'create'}), name='orders'),
 
 ]
