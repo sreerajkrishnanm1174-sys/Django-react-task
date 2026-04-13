@@ -10,14 +10,9 @@ from rest_framework.filters import SearchFilter
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from .permissions import IsOwner
-
-# with using Viewset
+from rest_framework.exceptions import AuthenticationFailed
 from django.db import transaction
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from rest_framework import status
-
+from rest_framework_simplejwt.tokens import RefreshToken
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -39,21 +34,64 @@ class RegisterView(APIView):
     
 
 class LoginView(APIView):
-    permission_classes = [AllowAny]
-    def post(self,request):
-        data=request.data
-        serializer=LoginSerializer(data=data)
-        if not serializer.is_valid():
-            return Response({"messages":serializer.errors},status=status.HTTP_404_NOT_FOUND)
+    permission_classes=[AllowAny]
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            
         
-        user = serializer.validated_data["user"]
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({
-            "message": "Login successful",
-            "token": token.key
-        }, status=status.HTTP_200_OK)
 
-        
+            user = serializer.validated_data["user"]
+
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+            user_serializer = userserializer(user)
+
+            response = Response({
+                "access": access_token,
+                "refresh": refresh_token,
+                "user": user_serializer.data,
+                #    { # "id": user.id,
+                #     # "email": user.email,
+                #     # "name": user.get_full_name(),
+                #     # "username": user.username,
+                #     # "phone": user.phone,
+                #     # "role": user.role.name if user.role else None,
+                #     # "bio": user.profile.bio if hasattr(user, 'profile') else None}
+                    
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Store refresh token in HttpOnly cookie (recommended)
+        response.set_cookie(
+            key="refresh_token",
+            value=str(refresh),
+            httponly=True,
+            secure=False,       # True in production (HTTPS)
+            samesite="Strict"
+        )
+
+        return response
+
+
+class RefreshView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        refresh_token = request.COOKIES.get("refresh_token")
+
+        if not refresh_token:
+            raise AuthenticationFailed("No refresh token")
+
+        try:
+            refresh = RefreshToken(refresh_token)
+            return Response({
+                "access": str(refresh.access_token)
+            })
+        except Exception:
+            raise AuthenticationFailed("Invalid refresh token")        
 
 
 

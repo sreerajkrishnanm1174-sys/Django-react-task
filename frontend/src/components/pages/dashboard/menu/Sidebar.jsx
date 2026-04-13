@@ -14,8 +14,8 @@ function Sidebar() {
         Categories
       </NavLink>
 
-      <NavLink to="/menu/add-item" className={linkClass}>
-        Add Item
+      <NavLink to="/menu/add-menu" className={linkClass}>
+        Add Menu
       </NavLink>
 
       <NavLink to="/menu/list" className={linkClass}>

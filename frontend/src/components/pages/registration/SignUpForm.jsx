@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import LoginInput from "../login/LoginInput";
 import LoginBtn from "../login/LoginBtn";
 import useSignup from "./signup";
+import { Link } from "react-router-dom";
 
 function SignUpForm() {
   const [confirmpassword, setConfirmpassword] = useState("");
@@ -135,9 +136,12 @@ function SignUpForm() {
           {/* Footer */}
           <p className="text-center text-sm text-gray-500">
             Already have an account?{" "}
-            <span className="text-orange-500 cursor-pointer hover:underline">
+            <Link
+              to="/login"
+              className="cursor-pointer hover:text-orange-500"
+            >
               Login
-            </span>
+            </Link>
           </p>
         </form>
       </div>

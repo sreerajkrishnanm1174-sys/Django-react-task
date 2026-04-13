@@ -1,15 +1,14 @@
 import React, { useEffect } from "react";
 import LoginInput from "./LoginInput";
-import LoginBtn from "./LoginBtn";
-import useLogin from "./login";
+import useLogin from "./Login";
 import { useNavigate } from "react-router-dom";
-import useUser from "../../../hooks/getuser/useUser";
 import userAuthStore from "../../../store/userAuthstore";
+import { useLocation, Link } from "react-router-dom";
 
 function LoginForm() {
   const navigate = useNavigate();
   const [formData, setFormData] = React.useState({
-    username: "",
+    email: "",
     password: "",
   });
   const handleChange = (e) => {
@@ -17,19 +16,33 @@ function LoginForm() {
   };
   const { mutate, isPending, isError, error, isSuccess } = useLogin();
 
+  const location = useLocation();
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle login logic here
-    mutate(formData);
-  };
-  const { user, isLoggedIn, logout } = userAuthStore();
-  useEffect(() => {
-    if (!isLoggedIn || !user) return;
 
-    if (user.results[0].role.role_name === "chef") {
-      navigate("/menu");
-    }
-  }, [isLoggedIn, user, navigate]);
+    mutate(formData, {
+      onSuccess: () => {
+        const state = userAuthStore.getState();
+        const role = state.user?.role?.role_name;
+
+        const from = location.state?.from?.pathname;
+
+        if (from) {
+          // user came from protected route
+          navigate(from, { replace: true });
+        } else {
+          // role-based fallback
+          if (role === "chef") {
+            navigate("/menu", { replace: true });
+          } else {
+            navigate("/", { replace: true });
+          }
+        }
+      },
+    });
+  };
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 px-4">
       <form
@@ -39,19 +52,21 @@ function LoginForm() {
         {/* Header */}
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-800">Welcome Back</h2>
+          <h2 className="text-sm text-gray-500">Sign in to your account</h2>
           <p className="text-sm text-gray-500">
             Login to manage your restaurant
           </p>
         </div>
 
-        {/* Username */}
+        {/* email */}
         <LoginInput
-          label="Username"
-          name="username"
-          value={formData.username}
+          label="email"
+          name="email"
+          value={formData.email}
+          type="email"
           onChange={handleChange}
-          placeholder="Enter your username"
-          autoComplete="username"
+          placeholder="Enter your email"
+          autoComplete="email"
         />
 
         {/* Password */}
@@ -83,12 +98,16 @@ function LoginForm() {
 
         {/* Footer */}
         <div className="flex justify-between text-sm text-gray-500">
-          <span className="cursor-pointer hover:text-orange-500">
+          <Link
+            to="/forgot-password"
+            className="cursor-pointer hover:text-orange-500"
+          >
             Forgot password?
-          </span>
-          <span className="cursor-pointer hover:text-orange-500">
+          </Link>
+
+          <Link to="/register" className="cursor-pointer hover:text-orange-500">
             Create account
-          </span>
+          </Link>
         </div>
       </form>
     </div>
