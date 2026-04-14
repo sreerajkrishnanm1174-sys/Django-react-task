@@ -10,7 +10,7 @@ class MenuItemPriceInline(TabularInline):
     model = MenuItemPrice
     extra = 1
     min_num = 1
-    fields = ["quantity", "price"]
+    fields = ["quantity","price"]
     verbose_name = "Price variant"
     verbose_name_plural = "Price variants"
 
@@ -19,7 +19,7 @@ class MenuItemPriceInline(TabularInline):
 class MenuItemInline(TabularInline):
     model = MenuItem
     extra = 1
-    fields = ["name", "is_veg", "is_available", "veg_badge"]
+    fields = ["name","image", "is_veg", "is_available", "veg_badge"]
     readonly_fields = ["veg_badge"]
     show_change_link = True
 
@@ -60,7 +60,7 @@ class MenuItemPriceAdmin(ModelAdmin):
 # ── MenuItem admin ──────────────────────────────────────────────
 @admin.register(MenuItem)
 class MenuItemAdmin(ModelAdmin):
-    list_display = ["id", "name", "category", "veg_badge", "availability_badge"]
+    list_display = ["id", "name","image", "category", "veg_badge", "availability_badge"]
     list_filter = ["is_available", "is_veg", "category"]
     search_fields = ["name"]
     ordering = ["-id"]
@@ -73,7 +73,7 @@ class MenuItemAdmin(ModelAdmin):
         (
             "Item details",
             {
-                "fields": ("name", "category"),
+                "fields": ("name","image", "category"),
                 "classes": ["tab"],
             },
         ),

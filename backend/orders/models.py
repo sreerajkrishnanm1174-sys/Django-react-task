@@ -37,11 +37,11 @@ class DiningTable(models.Model):
         return self.name
     
 class Order(models.Model):
-    table = models.ForeignKey('DiningTable', on_delete=models.PROTECT)
+    table = models.ForeignKey('DiningTable', on_delete=models.CASCADE)
 
     menu = models.ForeignKey(   # 🔥 IMPORTANT
        Menu,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name='orders',
         null=True, blank=True  # Temporary: allow null for migration
     )
@@ -61,7 +61,7 @@ class OrderItem(models.Model):
 
     menu_item_price = models.ForeignKey(
         MenuItemPrice,
-        on_delete=models.PROTECT
+        on_delete=models.CASCADE
     )
 
     quantity = models.PositiveIntegerField(default=1)
