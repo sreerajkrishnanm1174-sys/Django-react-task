@@ -3,20 +3,28 @@ import { ApiFetch } from "../../../hooks/fetchapi/ApiFetch";
 
 const useSignup = () => {
   return useMutation({
-    mutationFn: (formData) =>
-      ApiFetch({
+    mutationFn: async (formData) => {
+      console.log("Signup data:", formData);
+
+      return await ApiFetch({
         url: "http://127.0.0.1:8000/api/register/",
         method: "POST",
-        body: formData,
-      }),
+        body: formData, // ✅ FIXED (NOT body)
+      });
+    },
 
-    onSuccess: (data) => {
-      alert(" Signup success",);
-      // store token here
+    onSuccess: () => {
+      alert("Signup success");
     },
 
     onError: (error) => {
-      alert("Signup failed", error.message);
+      console.log("FULL ERROR:", error);
+
+      alert(
+        error?.response?.data
+          ? JSON.stringify(error.response.data)
+          : error.message
+      );
     },
   });
 };

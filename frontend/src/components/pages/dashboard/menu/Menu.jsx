@@ -10,8 +10,8 @@ export default function Menu() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar heading="Menu">
-        <NavLink to="/menu/categories" className={linkClass}>
-          Categories
+        <NavLink to="/menu/update" className={linkClass}>
+          Update Menu
         </NavLink>
 
         <NavLink to="/menu/add-menu" className={linkClass}>

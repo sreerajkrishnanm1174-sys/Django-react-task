@@ -1,6 +1,6 @@
 import React from "react";
 
-function LoginInput({ label,name, type = "text", value, onChange, placeholder,autoComplete }) {
+function LoginInput({ label,name, type = "text", value, onChange, placeholder,autoComplete, ...rest }) {
   return (
     <div className="mb-4">
       <label className="block mb-1 font-medium">{label}</label>
@@ -8,6 +8,7 @@ function LoginInput({ label,name, type = "text", value, onChange, placeholder,au
         type={type}
         value={value}
         name={name}
+        {...rest}   
         onChange={onChange}
         placeholder={placeholder}
         autoComplete={autoComplete}

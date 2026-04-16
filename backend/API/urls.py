@@ -21,7 +21,6 @@ urlpatterns = [
     path('menu-create/', CreateMenuView.as_view(), name='menu-create'),
     path('items/', ItemListView.as_view(), name='items-list'),
     path('categories/', CategoryListView.as_view(), name='categories-list'),
-
+    path("menu-update/<int:pk>/", MenuUpdateView.as_view()),
     path('orders/', OrderViewSet.as_view({'get': 'list', 'post': 'create'}), name='orders'),
-
 ]

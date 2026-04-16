@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
-import { ApiFetch } from "../../../../hooks/fetchapi/ApiFetch";
+import { ApiFetch, BASE_URL } from "../../../../hooks/fetchapi/ApiFetch";
 import userAuthStore from "../../../../store/userAuthstore";
 
 function MenuListPage() {
@@ -18,64 +18,57 @@ function MenuListPage() {
       }),
     enabled: !!token && !!selectedDate,
   });
+  console.log("Fetched menu data:", data);
 
-  return (
-    <div
-      className="min-h-screen bg-[#f5f0e8] py-12 px-4"
-      style={{ fontFamily: "'Jost', sans-serif" }}
-    >
-      {/* ── Date picker ── */}
-      <div className="max-w-2xl mx-auto mb-6 flex items-center gap-3">
-        <label className="text-xs tracking-[0.2em] uppercase text-[#b8955a] font-medium whitespace-nowrap">
-          Menu date
+ return (
+  <div className="min-h-screen bg-gradient-to-br from-[#f8f6f2] to-[#efe9dd] py-10 px-4">
+    {/* Header */}
+    <div className="max-w-5xl mx-auto mb-8 flex items-center justify-between flex-wrap gap-4">
+      <h1 className="text-2xl font-semibold text-[#2c2217]">
+        Menu Overview
+      </h1>
+
+      <div className="flex items-center gap-3">
+        <label className="text-xs uppercase tracking-wider text-[#8b7a5a]">
+          Select Date
         </label>
         <input
           type="date"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
-          className="flex-1 px-3 py-2 bg-white border border-[#d4c9a8] rounded text-sm text-[#2c2217] outline-none focus:border-[#b8955a] focus:ring-2 focus:ring-[#b8955a]/15 transition-colors"
+          className="px-3 py-2 rounded-lg border border-[#d6ccb5] bg-white shadow-sm focus:ring-2 focus:ring-[#c5a46d] outline-none"
         />
       </div>
+    </div>
 
-      {/* ── States ── */}
-      {isLoading && (
-        <p className="text-center text-amber-700 italic mt-10">Loading menu...</p>
-      )}
-      {isError && (
-        <p className="text-center text-red-500 mt-10">{error.message}</p>
-      )}
+    {/* States */}
+    {isLoading && (
+      <p className="text-center text-[#8b7a5a] mt-10">Loading menu...</p>
+    )}
 
-      {/* ── Menu cards ── */}
-      {!isLoading && !isError && data?.length === 0 && (
-        <p className="text-center text-[#9e8a68] italic mt-10 font-['Cormorant_Garamond',serif] text-lg">
-          No menus found for this date.
-        </p>
-      )}
+    {isError && (
+      <p className="text-center text-red-500 mt-10">{error.message}</p>
+    )}
 
+    {!isLoading && !isError && data?.length === 0 && (
+      <p className="text-center text-[#9e8a68] mt-10">
+        No menus available for this date.
+      </p>
+    )}
+
+    {/* Menu Cards */}
+    <div className="max-w-5xl mx-auto space-y-8">
       {data?.map((menu) => (
         <div
           key={menu.id}
-          className="max-w-2xl mx-auto mb-10 bg-[#fffdf7] border border-[#e0d5c0] rounded-sm px-14 py-12"
-          style={{
-            boxShadow:
-              "0 20px 60px rgba(0,0,0,0.08), inset 0 0 0 6px #fffdf7, inset 0 0 0 7px #e8dfc8",
-          }}
+          className="bg-white/70 backdrop-blur-md border border-[#e5dccb] rounded-2xl p-8 shadow-lg"
         >
-          {/* ── Header ── */}
-          <div className="text-center border-b border-[#d4c9a8] pb-8 mb-8 relative">
-            <p className="text-[10px] tracking-[0.35em] uppercase text-[#b8955a] mb-2">
-              Fine Dining Experience
-            </p>
-            <h1
-              className="text-5xl font-semibold text-[#2c2217]"
-              style={{ fontFamily: "'Cormorant Garamond', serif" }}
-            >
+          {/* Menu Header */}
+          <div className="mb-6">
+            <h2 className="text-3xl font-semibold text-[#2c2217]">
               {menu.name}
-            </h1>
-            <p
-              className="italic text-[#9e8a68] mt-2"
-              style={{ fontFamily: "'Cormorant Garamond', serif" }}
-            >
+            </h2>
+            <p className="text-sm text-[#8b7a5a] mt-1">
               {new Date(menu.date).toLocaleDateString("en-IN", {
                 weekday: "long",
                 year: "numeric",
@@ -83,111 +76,86 @@ function MenuListPage() {
                 day: "numeric",
               })}
             </p>
-            <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#fffdf7] px-3 text-[#b8955a] text-sm">
-              ✦
-            </span>
           </div>
 
-          {/* ── Categories ── */}
-          {menu.categories.map((category) => (
-            <div key={category.id} className="mb-8">
-              {/* Category heading */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex-1 h-px bg-[#d4c9a8]" />
-                <h3
-                  className="text-lg font-semibold tracking-[0.12em] uppercase text-[#2c2217] whitespace-nowrap"
-                  style={{ fontFamily: "'Cormorant Garamond', serif" }}
-                >
+          {/* Categories */}
+          <div className="space-y-8">
+            {menu.categories.map((category) => (
+              <div key={category.id}>
+                <h3 className="text-lg font-semibold text-[#3a2e1f] mb-4 border-l-4 border-[#c5a46d] pl-3">
                   {category.name}
                 </h3>
-                <div className="flex-1 h-px bg-[#d4c9a8]" />
-              </div>
 
-              {/* Items */}
-              {category.items?.length > 0 ? (
-                category.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="py-2.5 border-b border-dotted border-[#e8dfc8] last:border-none hover:bg-[#faf6ee] px-1 rounded transition-colors"
-                  >
-                    {/* Item name + veg dot */}
-                    <div className="flex items-center gap-2 mb-1">
-                      <span
-                        className={`w-2.5 h-2.5 rounded-sm border-2 flex-shrink-0 ${
-                          item.is_veg
-                            ? "border-green-600 bg-green-500"
-                            : "border-red-600 bg-red-500"
-                        }`}
-                      />
-                      <span
-                        className="text-[1.05rem] text-[#2c2217]"
-                        style={{ fontFamily: "'Cormorant Garamond', serif" }}
+                {/* Items Grid */}
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {category.items?.length > 0 ? (
+                    category.items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex gap-4 p-4 rounded-xl bg-white border border-[#eee4d3] hover:shadow-md transition"
                       >
-                        {item.name}
-                      </span>
-                    </div>
+                        {/* Image */}
+                        <img
+                          src={`${BASE_URL}${item.image}`}
+                          alt={item.name}
+                          className="w-20 h-20 object-cover rounded-lg"
+                        />
 
-                    {/* Price variants */}
-                    {item.prices?.length > 0 ? (
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 pl-5">
-                        {item.prices.map((p) => (
-                          <div
-                            key={p.id}
-                            className="flex items-baseline gap-1"
-                          >
-                            {/* Show quantity label only if it's not a single
-                                unnamed price */}
-                            {item.prices.length > 1 || p.quantity ? (
-                              <span className="text-xs text-[#9e8a68] tracking-wide">
-                                {p.quantity}
-                              </span>
-                            ) : null}
+                        {/* Details */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
                             <span
-                              className="font-semibold text-[#2c2217]"
-                              style={{ fontFamily: "'Cormorant Garamond', serif" }}
-                            >
-                              <span className="text-sm font-normal text-[#9e8a68]">
-                                ₹
-                              </span>
-                              {p.price}
-                            </span>
+                              className={`w-3 h-3 rounded-full ${
+                                item.is_veg
+                                  ? "bg-green-500"
+                                  : "bg-red-500"
+                              }`}
+                            />
+                            <h4 className="font-medium text-[#2c2217]">
+                              {item.name}
+                            </h4>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p
-                        className="pl-5 italic text-[#c8b99a] text-sm"
-                        style={{ fontFamily: "'Cormorant Garamond', serif" }}
-                      >
-                        Price not set
-                      </p>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <p
-                  className="italic text-[#c8b99a]"
-                  style={{ fontFamily: "'Cormorant Garamond', serif" }}
-                >
-                  No items available
-                </p>
-              )}
-            </div>
-          ))}
 
-          {/* ── Footer ── */}
-          <div className="text-center border-t border-[#d4c9a8] pt-6 mt-8 relative">
-            <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#fffdf7] px-3 text-[#b8955a] text-sm">
-              ✦
-            </span>
-            <p className="text-[10px] tracking-[0.25em] uppercase text-[#c8b99a]">
-              Thank you for dining with us
-            </p>
+                          {/* Prices */}
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {item.prices?.length > 0 ? (
+                              item.prices.map((p) => (
+                                <div
+                                  key={p.id}
+                                  className="px-2 py-1 bg-[#f5efe4] rounded-md text-sm"
+                                >
+                                  {p.quantity && (
+                                    <span className="text-[#8b7a5a] mr-1">
+                                      {p.quantity}
+                                    </span>
+                                  )}
+                                  <span className="font-semibold">
+                                    ₹{p.price}
+                                  </span>
+                                </div>
+                              ))
+                            ) : (
+                              <span className="text-sm text-[#b0a28a]">
+                                No price
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-[#b0a28a]">
+                      No items available
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       ))}
     </div>
-  );
-}
+  </div>
+);}
 
 export default MenuListPage;

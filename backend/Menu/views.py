@@ -1,3 +1,5 @@
+from urllib import request
+
 from django.shortcuts import render
 from .models import *
 from users.models import *
@@ -12,6 +14,7 @@ from django.db.models import Max, Subquery, OuterRef
 from .models import MenuCategory
 from .serializers import MenuCategoriesSerializer
 from rest_framework import generics
+from rest_framework.generics import UpdateAPIView
 # Create your views here.
 
 # @api_view(['GET'])
@@ -59,6 +62,7 @@ class CreateMenuView(APIView):
     def post(self, request):
 
         data = request.data.get("data")
+        
 
         if not data:
             return Response(
@@ -137,3 +141,10 @@ class ItemListView(generics.ListAPIView):
             queryset = queryset.filter(name__icontains=search)
 
         return queryset
+    
+
+
+class MenuUpdateView(UpdateAPIView):
+    queryset = Menu.objects.all()
+    serializer_class = MenuUpdateSerializer
+    permission_classes = [IsAuthenticated]

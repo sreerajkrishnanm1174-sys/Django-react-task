@@ -1,151 +1,196 @@
-import React, { useState } from "react";
+import React from "react";
 import LoginInput from "../login/LoginInput";
-import LoginBtn from "../login/LoginBtn";
+import { Link, useNavigate } from "react-router-dom";
 import useSignup from "./signup";
-import { Link } from "react-router-dom";
+import { RegSchema } from "../../../schema/RegSchema";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 function SignUpForm() {
-  const [confirmpassword, setConfirmpassword] = useState("");
-  const [formData, setFormData] = React.useState({
-    username: "",
-    firstname: "",
-    lastname: "",
-    phone: "",
-    bio: "",
-    password: "",
+  const { mutate, isPending } = useSignup();
+  const navigate = useNavigate();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setError,
+  } = useForm({
+    resolver: zodResolver(RegSchema),
+    defaultValues: {
+      email: "",
+      username: "",
+      first_name: "",
+      last_name: "",
+      bio: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
-  const handleConfirmPassword = (e) => {
-    const value = e.target.value;
-    setConfirmpassword(value);
-  };
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-  const { mutate, isPending, isError, error } = useSignup();
+ const onSubmit = (data) => {
+  const { confirmPassword, ...payload } = data;
+  console.log("FORM DATA:", data);
+  mutate(payload, {
+    onSuccess: () => {
+      alert("Signup successful! Please login.");
+      navigate("/login");
+    },
+    onError: (err) => {
+      const backendErrors = err?.response?.data;
+      console.log("BACKEND ERROR:", err?.response?.data);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+      if (backendErrors) {
+        Object.keys(backendErrors).forEach((field) => {
+          const message = Array.isArray(backendErrors[field])
+            ? backendErrors[field][0]
+            : backendErrors[field];
 
-    if (formData.password !== confirmpassword) {
-      alert("Passwords do not match");
-      return;
-    }
+          setError(field, {
+            type: "server",
+            message,
+          });
+        });
+      }
+    },
+  });
+};
 
-    mutate(formData);
-  };
   return (
-    <>
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md space-y-4"
-        >
-          {/* Title */}
-          <div className="text-center mb-4">
-            <h2 className="text-2xl font-bold text-gray-800">Create Account</h2>
-            <p className="text-sm text-gray-500">
-              Start managing your restaurant today
-            </p>
-          </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md space-y-4"
+      >
+        {/* Title */}
+        <div className="text-center mb-4">
+          <h2 className="text-2xl font-bold text-gray-800">Create Account</h2>
+          <p className="text-sm text-gray-500">
+            Start managing your restaurant today
+          </p>
+        </div>
 
-          {/* Inputs */}
-          <div className="grid grid-cols-2 gap-3">
+        {/* First + Last Name */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
             <LoginInput
               label="First Name"
-              name="firstname"
-              value={formData.firstname}
-              onChange={handleChange}
+              {...register("first_name")}
               placeholder="First name"
             />
-            <LoginInput
-              label="Last Name"
-              name="lastname"
-              value={formData.lastname}
-              onChange={handleChange}
-              placeholder="Last name"
-            />
+            {errors.first_name && (
+              <p className="text-red-500 text-sm">{errors.first_name.message}</p>
+            )}
           </div>
 
+          <div>
+            <LoginInput
+              label="Last Name"
+              {...register("last_name")}
+              placeholder="Last name"
+            />
+            {errors.last_name && (
+              <p className="text-red-500 text-sm">{errors.last_name.message}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Username */}
+        <div>
           <LoginInput
             label="Username"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
+            {...register("username")}
             placeholder="Enter username"
           />
+          {errors.username && (
+            <p className="text-red-500 text-sm">{errors.username.message}</p>
+          )}
+        </div>
 
+        {/* Email */}
+        <div>
           <LoginInput
             label="Email"
-            name="email"
             type="email"
-            value={formData.email}
-            onChange={handleChange}
+            {...register("email")}
             placeholder="Enter email"
           />
+          {errors.email && (
+            <p className="text-red-500 text-sm">{errors.email.message}</p>
+          )}
+        </div>
 
+        {/* Phone */}
+        <div>
           <LoginInput
             label="Phone"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
+            {...register("phone")}
             placeholder="Phone number"
           />
+          {errors.phone && (
+            <p className="text-red-500 text-sm">{errors.phone.message}</p>
+          )}
+        </div>
 
+        {/* Bio */}
+        <div>
           <LoginInput
             label="Bio"
-            name="bio"
-            value={formData.bio}
-            onChange={handleChange}
+            {...register("bio")}
             placeholder="Short bio"
           />
+          {errors.bio && (
+            <p className="text-red-500 text-sm">{errors.bio.message}</p>
+          )}
+        </div>
 
+        {/* Password */}
+        <div>
           <LoginInput
             label="Password"
-            name="password"
             type="password"
-            value={formData.password}
-            onChange={handleChange}
+            {...register("password")}
             placeholder="Password"
           />
+          {errors.password && (
+            <p className="text-red-500 text-sm">{errors.password.message}</p>
+          )}
+        </div>
 
+        {/* Confirm Password */}
+        <div>
           <LoginInput
             label="Confirm Password"
-            name="confirmpassword"
-            value={confirmpassword}
-            onChange={handleConfirmPassword}
+            type="password"
+            {...register("confirmPassword")}
             placeholder="Confirm password"
           />
-
-          {/* Error */}
-          {isError && (
-            <p className="text-sm text-red-500">
-              {error?.message || "Something went wrong"}
+          {errors.confirmPassword && (
+            <p className="text-red-500 text-sm">
+              {errors.confirmPassword.message}
             </p>
           )}
+        </div>
 
-          {/* Button */}
-          <button
-            type="submit"
-            disabled={isPending}
-            className="w-full py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 transition disabled:opacity-50"
-          >
-            {isPending ? "Creating..." : "Create Account"}
-          </button>
+        {/* Submit */}
+        <button
+          type="submit"
+          disabled={isPending}
+          className="w-full py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 transition disabled:opacity-50"
+        >
+          {isPending ? "Creating..." : "Create Account"}
+        </button>
 
-          {/* Footer */}
-          <p className="text-center text-sm text-gray-500">
-            Already have an account?{" "}
-            <Link
-              to="/login"
-              className="cursor-pointer hover:text-orange-500"
-            >
-              Login
-            </Link>
-          </p>
-        </form>
-      </div>
-    </>
+        {/* Footer */}
+        <p className="text-center text-sm text-gray-500">
+          Already have an account?{" "}
+          <Link to="/login" className="hover:text-orange-500">
+            Login
+          </Link>
+        </p>
+      </form>
+    </div>
   );
 }
 

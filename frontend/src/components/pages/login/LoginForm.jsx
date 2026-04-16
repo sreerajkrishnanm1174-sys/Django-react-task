@@ -1,52 +1,85 @@
 import React, { useEffect } from "react";
 import LoginInput from "./LoginInput";
 import useLogin from "./Login";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, } from "react-router-dom";
 import userAuthStore from "../../../store/userAuthstore";
 import { useLocation, Link } from "react-router-dom";
+import { LoginSchema } from "../../../schema/LoginSchema";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import LoginBtn from "./LoginBtn";
 
 function LoginForm() {
   const navigate = useNavigate();
-  const [formData, setFormData] = React.useState({
-    email: "",
-    password: "",
-  });
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
   const { mutate, isPending, isError, error, isSuccess } = useLogin();
 
-  const location = useLocation();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const{register, handleSubmit, formState:{errors}} =useForm({
+    resolver: zodResolver(LoginSchema)
+  })
 
-    mutate(formData, {
+  const onSubmit = (data) => {
+    mutate(data, {
       onSuccess: () => {
         const state = userAuthStore.getState();
         const role = state.user?.role?.role_name;
-
         const from = location.state?.from?.pathname;
-
         if (from) {
-          // user came from protected route
           navigate(from, { replace: true });
-        } else {
-          // role-based fallback
+        } 
+        else {
           if (role === "chef") {
-            navigate("/menu", { replace: true });
+            navigate("/menu", { replace: true }); 
           } else {
-            navigate("/", { replace: true });
+            navigate("/login", { replace: true });
           }
         }
       },
+      onError: (error) => {
+        console.error("Login failed:", error);
+      } 
     });
-  };
+  };  
+  // const [formData, setFormData] = React.useState({
+  //   email: "",
+  //   password: "",
+  // });
+  // const handleChange = (e) => {
+  //   setFormData({ ...formData, [e.target.name]: e.target.value });
+  // };
+  // const { mutate, isPending, isError, error, isSuccess } = useLogin();
+
+  // const location = useLocation();
+
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+
+  //   mutate(formData, {
+  //     onSuccess: () => {
+  //       const state = userAuthStore.getState();
+  //       const role = state.user?.role?.role_name;
+
+  //       const from = location.state?.from?.pathname;
+
+  //       if (from) {
+  //         // user came from protected route
+  //         navigate(from, { replace: true });
+  //       } else {
+  //         // role-based fallback
+  //         if (role === "chef") {
+  //           navigate("/menu", { replace: true });
+  //         } else {
+  //           navigate("/", { replace: true });
+  //         }
+  //       }
+  //     },
+  //   });
+  // };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 px-4">
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md space-y-5"
       >
         {/* Header */}
@@ -62,23 +95,31 @@ function LoginForm() {
         <LoginInput
           label="email"
           name="email"
-          value={formData.email}
+          // value={formData.email}
           type="email"
-          onChange={handleChange}
+          {...register("email")}
+          // onChange={handleChange}
           placeholder="Enter your email"
           autoComplete="email"
         />
+        {errors.email && (
+          <p className="text-red-500">{errors.email.message}</p>
+        )}
 
         {/* Password */}
         <LoginInput
           label="Password"
           type="password"
           name="password"
-          value={formData.password}
-          onChange={handleChange}
+          // value={formData.password}
+          {...register("password")}
+          // onChange={handleChange}
           placeholder="Enter your password"
           autoComplete="current-password"
         />
+        {errors.password && (
+          <p className="text-red-500">{errors.password.message}</p>
+        )}
 
         {/* Error */}
         {isError && (

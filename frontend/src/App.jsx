@@ -10,6 +10,7 @@ import RoleProtectedRoute from "./routes/RoleProtectedRoute";
 import AddMenu from "./components/pages/dashboard/menu/AddMenu";
 import OrderDashboard from "./components/pages/dashboard/orders/OrderDashboard";
 import CreateOrder from "./components/pages/dashboard/orders/CreateOrder";
+import UpdateMenu from "./components/pages/dashboard/menu/UpdateMenu";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -32,9 +33,9 @@ function App() {
               </RoleProtectedRoute>
             }
           >
-            {/* <Route path="categories" element={<CategoriesPage />} /> */}
             <Route path="add-menu" element={<AddMenu />} />
             <Route path="list" element={<MenuListPage />} />
+            <Route path="update" element={<UpdateMenu />} />
 
             {/* default page */}
             <Route index element={<MenuListPage />} />
