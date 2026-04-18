@@ -68,10 +68,15 @@ class RegisterSerializer(serializers.ModelSerializer):
             )
 
         return user
+class LoginResponseSerializer(serializers.Serializer):
+    access = serializers.CharField()
+    refresh = serializers.CharField()
+    user = userserializer()
     
 class LoginSerializer(serializers.Serializer):
     email = serializers.CharField()
     password = serializers.CharField(write_only=True)
+    
 
     def validate(self, data):
         try:

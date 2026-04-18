@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     "corsheaders",
     "orders",
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -138,8 +139,10 @@ STATIC_URL = 'static/'
 AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
-       'DEFAULT_PERMISSION_CLASSES': [
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
+        
     ],
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -189,3 +192,9 @@ UNFOLD = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'RestaurantAPI',
+    'DESCRIPTION': 'API documentation',
+    'VERSION': '1.0.0',
+}
