@@ -25,6 +25,8 @@ class userserializer(serializers.ModelSerializer):
 
 class RegisterSerializer(serializers.ModelSerializer):
     username=serializers.CharField()
+    first_name=serializers.CharField()
+    last_name=serializers.CharField()
     email=serializers.CharField()
     password=serializers.CharField()
     phone = serializers.CharField(max_length=15)
@@ -32,7 +34,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'phone','bio']
+        fields = ['username', 'email', 'password', 'phone','bio', 'first_name', 'last_name']
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -53,6 +55,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             user = User.objects.create_user(
                 username=validated_data["username"],
+                first_name=validated_data["first_name"],
+                last_name=validated_data["last_name"],
                 email=validated_data["email"],
                 password=validated_data["password"],
                 phone=validated_data["phone"]
@@ -64,10 +68,15 @@ class RegisterSerializer(serializers.ModelSerializer):
             )
 
         return user
+class LoginResponseSerializer(serializers.Serializer):
+    access = serializers.CharField()
+    refresh = serializers.CharField()
+    user = userserializer()
     
 class LoginSerializer(serializers.Serializer):
     email = serializers.CharField()
     password = serializers.CharField(write_only=True)
+    
 
     def validate(self, data):
         try:

@@ -16,6 +16,8 @@ const extractMessage = (data) => {
   return String(data);
 };
 
+export const BASE_URL = "http://127.0.0.1:8000";
+
 export const ApiFetch = async ({
   url,
   method = "GET",
@@ -24,13 +26,17 @@ export const ApiFetch = async ({
   token = "",
 }) => {
   try {
+    const isFormData = body instanceof FormData;
     const response = await axios({
       url,
       method,
       data: body,
       headers: {
-        "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
+
+        // ✅ ONLY set JSON header when NOT FormData
+        ...(!isFormData && { "Content-Type": "application/json" }),
+
         ...headers,
       },
     });

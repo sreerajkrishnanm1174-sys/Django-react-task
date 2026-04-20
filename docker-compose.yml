@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    container_name: django_app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app   # ✅ keeps db.sqlite3 safe
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  frontend:
+    build: ./frontend
+    container_name: react_app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules   # ✅ VERY IMPORTANT
+    stdin_open: true
+    tty: true

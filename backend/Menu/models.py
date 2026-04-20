@@ -19,7 +19,7 @@ class Menu(models.Model):
     # Who updated it (chef/admin)
     updated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,
         blank=True
     )
@@ -40,12 +40,10 @@ class MenuCategory(models.Model):
         on_delete=models.CASCADE,
         related_name='categories'
     )
-    name = models.CharField(max_length=100,unique=True)
-   
+    name = models.CharField(max_length=100)
 
     class Meta:
-        
-        unique_together = ['menu', 'name']
+        unique_together = ['menu', 'name']  # ✅ IMPORTANT
 
     def __str__(self):
         return self.name
@@ -57,8 +55,8 @@ class MenuItem(models.Model):
         related_name='items'
     )
 
-    name = models.CharField(max_length=150,unique=True)
-    
+    name = models.CharField(max_length=150)
+    image = models.ImageField(upload_to='menu_items/', null=True, blank=True)
 
     is_available = models.BooleanField(default=True)
     is_veg = models.BooleanField(default=False)

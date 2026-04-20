@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Menu, MenuCategory, MenuItem, MenuItemPrice
+import json
 
 
 # ── READ serializers ────────────────────────────────────────────
@@ -15,7 +16,7 @@ class MenuItemsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MenuItem
-        fields = ['id', 'name', 'is_available', 'is_veg', 'prices']
+        fields = ['id', 'name',"image", 'is_available', 'is_veg', 'prices']
 
 
 class MenuCategoriesSerializer(serializers.ModelSerializer):
@@ -24,6 +25,7 @@ class MenuCategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = MenuCategory
         fields = ['id', 'name', 'items']
+        
 
 
 class MenuSerializer(serializers.ModelSerializer):
@@ -61,7 +63,6 @@ class MenuCategoryCreateSerializer(serializers.ModelSerializer):
         model = MenuCategory
         fields = ['name', 'is_new', 'existing_id', 'items']
 
-
 class MenuCreateSerializer(serializers.ModelSerializer):
     categories = MenuCategoryCreateSerializer(many=True)
 
@@ -70,41 +71,161 @@ class MenuCreateSerializer(serializers.ModelSerializer):
         fields = ['name', 'date', 'version', 'is_active', 'categories']
 
     def create(self, validated_data):
-        categories_data = validated_data.pop('categories', [])
+        request = self.context.get('request')
 
-        menu = Menu.objects.create(**validated_data)
+        categories_data = validated_data.get('categories', [])
 
-        for cat_data in categories_data:
-            items_data = cat_data.pop('items', [])
-            cat_data.pop('is_new', None)
-            cat_data.pop('existing_id', None)
+        menu = Menu.objects.create(
+            name=validated_data.get('name'),
+            date=validated_data.get('date'),
+            version=validated_data.get('version'),
+            is_active=validated_data.get('is_active'),
+        )
 
-            category = MenuCategory.objects.create(menu=menu, **cat_data)
+        for ci, cat_data in enumerate(categories_data):
 
-            for item_data in items_data:
-                prices_data = item_data.pop('prices', [])
+            category = MenuCategory.objects.create(
+                menu=menu,
+                name=cat_data.get('name')
+            )
 
-                menu_item, _ = MenuItem.objects.get_or_create(
-                    name=item_data['name'],
-                    defaults={
-                        'category':     category,
-                        'is_veg':       item_data.get('is_veg', False),
-                        'is_available': item_data.get('is_available', True),
-                    }
+            for ii, item_data in enumerate(cat_data.get('items', [])):
+
+                image = request.FILES.get(f'image_{ci}_{ii}')
+                print(f"Received image for item {item_data.get('name')}: {image}")  
+
+                item = MenuItem.objects.create(
+                    category=category,
+                    name=item_data.get('name'),
+                    image=image,
+                    is_veg=item_data.get('is_veg', False),
+                    is_available=item_data.get('is_available', True),
                 )
 
-                menu_item.category     = category
-                menu_item.is_available = item_data.get('is_available', True)
-                menu_item.save(update_fields=['category', 'is_available'])
-
-                for price_data in prices_data:
-                    if not price_data.get('quantity', '').strip():
-                        continue
-
-                    MenuItemPrice.objects.update_or_create(
-                        item=menu_item,
-                        quantity=price_data['quantity'].strip(),
-                        defaults={'price': price_data['price']},
-                    )
+                for price in item_data.get('prices', []):
+                    if price.get('quantity') and price.get('price'):
+                        MenuItemPrice.objects.create(
+                            item=item,
+                            quantity=price['quantity'],
+                            price=price['price'],
+                        )
 
         return menu
+    
+
+
+
+class MenuItemPriceUpdateSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+
+    class Meta:
+        model = MenuItemPrice
+        fields = ['id', 'quantity', 'price']
+
+
+class MenuItemUpdateSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    prices = MenuItemPriceUpdateSerializer(many=True)
+
+    class Meta:
+        model = MenuItem
+        fields = ['id', 'name', 'image', 'is_available', 'is_veg', 'prices']
+
+
+class MenuCategoryUpdateSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    items = MenuItemUpdateSerializer(many=True)
+
+    class Meta:
+        model = MenuCategory
+        fields = ['id', 'name', 'items']
+
+
+class MenuUpdateSerializer(serializers.ModelSerializer):
+    categories = MenuCategoryUpdateSerializer(many=True)
+
+    class Meta:
+        model = Menu
+        fields = ['id', 'name', 'date', 'version', 'is_active', 'categories']
+
+    # 🔥 FIX: Parse JSON string from FormData
+    def to_internal_value(self, data):
+        categories = data.get("categories")
+
+        if isinstance(categories, str):
+            try:
+                data._mutable = True  # required for QueryDict
+                data["categories"] = json.loads(categories)
+            except Exception:
+                raise serializers.ValidationError({
+                    "categories": "Invalid JSON format"
+                })
+
+        return super().to_internal_value(data)
+
+    def update(self, instance, validated_data):
+        request = self.context.get("request")
+        categories_data = validated_data.pop("categories", [])
+
+        # ─── Update Menu ───
+        instance.name = validated_data.get("name", instance.name)
+        instance.date = validated_data.get("date", instance.date)
+        instance.version = validated_data.get("version", instance.version)
+        instance.is_active = validated_data.get("is_active", instance.is_active)
+        instance.save()
+
+        existing_categories = {c.id: c for c in instance.categories.all()}
+
+        for ci, cat_data in enumerate(categories_data):
+            items_data = cat_data.pop("items", [])
+            cat_id = cat_data.get("id")
+
+            # ─── CATEGORY ───
+            if cat_id and cat_id in existing_categories:
+                category = existing_categories[cat_id]
+                category.name = cat_data.get("name", category.name)
+                category.save()
+            else:
+                category = MenuCategory.objects.create(menu=instance, **cat_data)
+
+            existing_items = {i.id: i for i in category.items.all()}
+
+            for ii, item_data in enumerate(items_data):
+                prices_data = item_data.pop("prices", [])
+                item_id = item_data.get("id")
+
+                image = request.FILES.get(f'image_{ci}_{ii}')
+
+                # ─── ITEM ───
+                if item_id and item_id in existing_items:
+                    item = existing_items[item_id]
+                    item.name = item_data.get("name", item.name)
+                    item.is_veg = item_data.get("is_veg", item.is_veg)
+                    item.is_available = item_data.get("is_available", item.is_available)
+
+                    if image:
+                        item.image = image
+
+                    item.save()
+                else:
+                    item = MenuItem.objects.create(
+                        category=category,
+                        image=image,
+                        **item_data
+                    )
+
+                existing_prices = {p.id: p for p in item.prices.all()}
+
+                for price_data in prices_data:
+                    price_id = price_data.get("id")
+
+                    # ─── PRICE ───
+                    if price_id and price_id in existing_prices:
+                        price = existing_prices[price_id]
+                        price.quantity = price_data.get("quantity", price.quantity)
+                        price.price = price_data.get("price", price.price)
+                        price.save()
+                    else:
+                        MenuItemPrice.objects.create(item=item, **price_data)
+
+        return instance

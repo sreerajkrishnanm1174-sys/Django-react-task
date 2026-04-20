@@ -1,3 +1,5 @@
+from urllib import request
+
 from django.shortcuts import render
 from .models import *
 from users.models import *
@@ -8,8 +10,11 @@ from rest_framework.response import Response
 from django.db.models import Count, Sum
 from rest_framework.views import APIView
 from rest_framework import status
-
+from django.db.models import Max, Subquery, OuterRef
+from .models import MenuCategory
+from .serializers import MenuCategoriesSerializer
 from rest_framework import generics
+from rest_framework.generics import UpdateAPIView
 # Create your views here.
 
 # @api_view(['GET'])
@@ -52,9 +57,31 @@ class GetMenuView(APIView):
         serializer = MenuSerializer(menus, many=True)
         return Response(serializer.data)
  
+
 class CreateMenuView(APIView):
     def post(self, request):
-        serializer = MenuCreateSerializer(data=request.data)
+
+        data = request.data.get("data")
+        
+
+        if not data:
+            return Response(
+                {"error": "Missing data payload"},
+                status=400
+            )
+
+        try:
+            parsed_data = json.loads(data)
+        except Exception as e:
+            return Response(
+                {"error": "Invalid JSON", "details": str(e)},
+                status=400
+            )
+
+        serializer = MenuCreateSerializer(
+            data=parsed_data,
+            context={"request": request}
+        )
 
         if serializer.is_valid():
             menu = serializer.save()
@@ -63,9 +90,10 @@ class CreateMenuView(APIView):
                 status=201
             )
 
-        print("ERROR:", serializer.errors)  # 👈 ADD THIS
-
+        print(serializer.errors)
         return Response(serializer.errors, status=400)
+
+
 
 
 
@@ -74,15 +102,25 @@ class CategoryListView(generics.ListAPIView):
     serializer_class = MenuCategoriesSerializer
 
     def get_queryset(self):
-        queryset = MenuCategory.objects.all().prefetch_related('items')
+        # Get the latest (highest) id per category name
+        latest_ids = (
+            MenuCategory.objects
+            .values("name")
+            .annotate(latest_id=Max("id"))
+            .values("latest_id")
+        )
 
-        # ✅ optional filter by menu
+        queryset = (
+            MenuCategory.objects
+            .filter(id__in=Subquery(latest_ids))
+            .prefetch_related("items")
+        )
+
         menu_id = self.request.query_params.get("menu_id")
         if menu_id:
             queryset = queryset.filter(menu_id=menu_id)
 
-        return queryset.order_by("menu", "name" )
-
+        return queryset.order_by("name")
 
 
 class ItemListView(generics.ListAPIView):
@@ -103,3 +141,10 @@ class ItemListView(generics.ListAPIView):
             queryset = queryset.filter(name__icontains=search)
 
         return queryset
+    
+
+
+class MenuUpdateView(UpdateAPIView):
+    queryset = Menu.objects.all()
+    serializer_class = MenuUpdateSerializer
+    permission_classes = [IsAuthenticated]

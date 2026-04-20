@@ -3,7 +3,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import User,Profile
-from .serializers import userserializer,RegisterSerializer,LoginSerializer
+from .serializers import LoginResponseSerializer, userserializer,RegisterSerializer,LoginSerializer
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.filters import SearchFilter
@@ -13,6 +13,9 @@ from .permissions import IsOwner
 from rest_framework.exceptions import AuthenticationFailed
 from django.db import transaction
 from rest_framework_simplejwt.tokens import RefreshToken
+from drf_spectacular.utils import extend_schema
+
+
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -33,13 +36,22 @@ class RegisterView(APIView):
         )
     
 
+
+
 class LoginView(APIView):
     permission_classes=[AllowAny]
+    # for api documentation
+    @extend_schema(
+        request=LoginSerializer,   # ✅ shows email/password fields
+        responses={
+            200: LoginResponseSerializer,  # ✅ shows response body
+            400: None,
+        },
+        description="Login using email and password to receive JWT tokens"
+    )
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            
-        
 
             user = serializer.validated_data["user"]
 
