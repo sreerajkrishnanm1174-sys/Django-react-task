@@ -1,0 +1,19 @@
+{% extends "admin/base_site.html" %}
+
+{% block branding %}
+
+<h1 id="site-name" style="font-family: cursive;">
+    <a href="{% url 'admin:index' %}">CUSTOM ADMIN LOADED</a>
+</h1>
+{% endblock %}
+{% block messages %}
+    {% if messages %}
+        <ul class="messagelist">
+            {% for message in messages %}
+                <li class="{{ message.tags }}">
+                    {{ message }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}
