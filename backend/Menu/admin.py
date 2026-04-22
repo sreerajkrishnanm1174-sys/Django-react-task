@@ -152,7 +152,7 @@ class MenuCategoryAdmin(ModelAdmin):
 # ── Menu admin ──────────────────────────────────────────────────
 @admin.register(Menu)
 class MenuAdmin(ModelAdmin):
-    list_display = ["id", "name", "date", "version", "active_badge", "category_count"]
+    list_display = ["id", "name", "date", "version", "active_badge", "category_count", "updated_by"]
     search_fields = ["name", "version"]
     list_filter = ["date", "is_active"]
     ordering = ["-date", "-version"]
@@ -165,7 +165,7 @@ class MenuAdmin(ModelAdmin):
         (
             "Menu details",
             {
-                "fields": ("name", "date", "version"),
+                "fields": ("name", "date", "version", "updated_by"),
                 "classes": ["tab"],
             },
         ),

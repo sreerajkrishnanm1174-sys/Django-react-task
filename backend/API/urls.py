@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from orders.views import OrderViewSet
-from users.views import UserViewset, userapi, ClassUser, RegisterView, LoginView
+from users.views import GoogleLoginView, UserViewset, userapi, ClassUser, RegisterView, LoginView
 from .views import api_root
 from Menu.views import*
 
@@ -23,4 +23,5 @@ urlpatterns = [
     path('categories/', CategoryListView.as_view(), name='categories-list'),
     path("menu-update/<int:pk>/", MenuUpdateView.as_view()),
     path('orders/', OrderViewSet.as_view({'get': 'list', 'post': 'create'}), name='orders'),
+    path('auth/google/', GoogleLoginView.as_view(), name='google_login'),
 ]

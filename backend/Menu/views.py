@@ -77,7 +77,7 @@ class CreateMenuView(APIView):
                 {"error": "Invalid JSON", "details": str(e)},
                 status=400
             )
-
+        print("Parsed data for menu creation:", parsed_data)  # Debug log
         serializer = MenuCreateSerializer(
             data=parsed_data,
             context={"request": request}
