@@ -3,7 +3,7 @@ import userAuthStore from "../store/userAuthstore";
 
 const RoleProtectedRoute = ({ children, allowedRoles }) => {
   const { isLoggedIn, user } = userAuthStore();
-  console.log("RoleProtectedRoute - User:", user, "IsLoggedIn:", isLoggedIn);
+  // console.log("RoleProtectedRoute - User:", user, "IsLoggedIn:", isLoggedIn);
   const location = useLocation();
 
   if (!isLoggedIn || !user) {
