@@ -43,6 +43,19 @@ export const ApiFetch = async ({
 
     return response.data;
   } catch (error) {
+    const status = error.response?.status;
+    if (status === 401) {
+      // Token expired or invalid
+
+      // Clear auth data
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+
+      // Redirect to login
+      window.location.href = "/login";
+
+      return; // stop execution
+    }
     const message = extractMessage(error.response?.data);
     throw new Error(message);
   }

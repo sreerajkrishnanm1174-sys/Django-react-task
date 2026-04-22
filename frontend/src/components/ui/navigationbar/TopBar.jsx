@@ -1,6 +1,9 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import userAuthStore from "../../../store/userAuthstore";
+import DropdownMenu from "../menu ui/dropdown/DropdownMenu";
+import DropdownItem from "../menu ui/dropdown/DropdownItem";
+import DropdownSeparator from "../menu ui/dropdown/DropdownSeparator";
 
 
 
@@ -14,10 +17,10 @@ const NOTIFICATIONS = [
 export default function Topbar({nav_links}) {
   const navigate = useNavigate();
   const { user, logout } = userAuthStore();
-
+  console.log("Topbar user:", user);
   const unreadCount = NOTIFICATIONS.filter((n) => !n.read).length;
-  const initials = user?.name
-    ? user.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
+  const initials = user?.username
+    ? user.username.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
     : "CK";
 
   return (
@@ -35,7 +38,7 @@ export default function Topbar({nav_links}) {
           </svg>
         </div>
         <span className="text-[15px] font-medium text-gray-900 tracking-tight">
-          Infolks <span className="text-[#b8955a]">Kitchen</span>
+          Restaurant <span className="text-[#b8955a]">Menu</span>
         </span>
       </a>
 
@@ -90,15 +93,15 @@ export default function Topbar({nav_links}) {
         </DropdownMenu> */}
 
         {/* User menu */}
-        {/* <DropdownMenu
+        <DropdownMenu
           trigger={
             <button className="flex items-center gap-2 rounded-lg border border-gray-200 py-1 pl-1 pr-2.5 transition-colors hover:bg-gray-50">
               <div className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[#2c2217] text-[11px] font-medium text-[#f5c97a]">
                 {initials}
               </div>
               <div className="text-left">
-                <p className="text-[13px] font-medium leading-tight text-gray-900">{user?.name ?? "Chef Kumar"}</p>
-                <p className="text-[11px] leading-tight text-gray-400">{user?.role ?? "Admin"}</p>
+                <p className="text-[13px] font-medium leading-tight text-gray-900">{user?.username ?? "Chef Kumar"}</p>
+                <p className="text-[11px] leading-tight text-gray-400">{user?.role?.role_name ?? "Admin"}</p>
               </div>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-gray-400 ml-0.5">
                 <path d="M2 4l4 4 4-4" />
@@ -116,7 +119,7 @@ export default function Topbar({nav_links}) {
           <DropdownItem label="Sign out" danger onClick={() => { logout(); navigate("/login"); }}
             icon={<svg viewBox="0 0 16 16" fill="currentColor"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3v-1.5H4V3.5h2V2zm4.7 4.3l-1-1-1.1 1.1 1.2 1.1H5v1.5h4.8L8.6 10l1.1 1 2.7-2.4-1.7-2.3z" /></svg>}
           />
-        </DropdownMenu> */}
+        </DropdownMenu>
       </div>
     </header>
   );
