@@ -7,10 +7,12 @@ import { LoginSchema } from "../../../schema/LoginSchema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
+import { set } from "zod";
 
 const GOOGLE_LOGIN_URL = "http://127.0.0.1:8000/api/auth/google/";
 
 function LoginForm() {
+  const { setAuth } = userAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const { mutate, isPending, isError, error } = useLogin();
@@ -31,7 +33,7 @@ function LoginForm() {
 
     window.google.accounts.id.initialize({
       client_id:
-        "1001892126357-p375g259f7le801860o5b5dgltujgbe7.apps.googleusercontent.com",
+        "1001892126357-nijum9s09n6t4icceb797hhsroofgbsv.apps.googleusercontent.com",
       callback: async (response) => {
         try {
           const res = await fetch("http://127.0.0.1:8000/api/auth/google/", {
@@ -51,10 +53,12 @@ function LoginForm() {
           }
           const token = data?.access; // Adjust based on your API response structure
           const user = data?.user;
-          userAuthStore.setState({
-            user: data.user,
-            token: data.access, // or data.token depending backend
+          setAuth({
+            user: user,
+            token: token,
           });
+          
+          
 
           onSuccess();
 
