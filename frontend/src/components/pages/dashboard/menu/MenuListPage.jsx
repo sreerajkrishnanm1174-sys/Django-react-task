@@ -4,10 +4,10 @@ import { ApiFetch, BASE_URL } from "../../../../hooks/fetchapi/ApiFetch";
 import userAuthStore from "../../../../store/userAuthstore";
 
 function MenuListPage() {
-  const { token } = userAuthStore();
+  const { token,user } = userAuthStore();
   const today = new Date().toISOString().split("T")[0];
   const [selectedDate, setSelectedDate] = useState(today);
-
+  // console.log("User info from store:", user);
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["menu-items", selectedDate],
     queryFn: () =>
@@ -18,7 +18,7 @@ function MenuListPage() {
       }),
     enabled: !!token && !!selectedDate,
   });
-  console.log("Fetched menu data:", data);
+  // console.log("Fetched menu data:", data);
 
  return (
   <div className="min-h-screen bg-gradient-to-br from-[#f8f6f2] to-[#efe9dd] py-10 px-4">
@@ -68,6 +68,11 @@ function MenuListPage() {
             <h2 className="text-3xl font-semibold text-[#2c2217]">
               {menu.name}
             </h2>
+            <br />
+            <p>Updated By : {menu.updated_by?.first_name} {menu.updated_by?.last_name }</p>
+            
+            <h5 className="text-xl text-[#2c2217]">
+            </h5>
             <p className="text-sm text-[#8b7a5a] mt-1">
               {new Date(menu.date).toLocaleDateString("en-IN", {
                 weekday: "long",
@@ -126,7 +131,7 @@ function MenuListPage() {
                                 >
                                   {p.quantity && (
                                     <span className="text-[#8b7a5a] mr-1">
-                                      {p.quantity}
+                                      {p.quantity} :   
                                     </span>
                                   )}
                                   <span className="font-semibold">

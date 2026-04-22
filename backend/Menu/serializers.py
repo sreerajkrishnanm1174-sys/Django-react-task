@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Menu, MenuCategory, MenuItem, MenuItemPrice
+from users.models import User
 import json
 
 
@@ -26,14 +27,18 @@ class MenuCategoriesSerializer(serializers.ModelSerializer):
         model = MenuCategory
         fields = ['id', 'name', 'items']
         
-
+class updatedBySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id",'username', "first_name", "last_name","email", "phone","role","profile"]
 
 class MenuSerializer(serializers.ModelSerializer):
     categories = MenuCategoriesSerializer(many=True, read_only=True)
+    updated_by = updatedBySerializer(read_only=True)
 
     class Meta:
         model = Menu
-        fields = ['id', 'name', 'date', 'version', 'is_active', 'categories']
+        fields = ['id', 'name', 'date', 'version', 'is_active', 'categories', 'updated_by']
 
 
 # ── WRITE serializers ───────────────────────────────────────────
@@ -68,11 +73,11 @@ class MenuCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Menu
-        fields = ['name', 'date', 'version', 'is_active', 'categories']
+        fields = ['name', 'date', 'version', 'is_active', 'categories', 'updated_by']
 
     def create(self, validated_data):
         request = self.context.get('request')
-
+        print("Received data for menu creation:", validated_data)  # Debug log
         categories_data = validated_data.get('categories', [])
 
         menu = Menu.objects.create(
@@ -80,6 +85,7 @@ class MenuCreateSerializer(serializers.ModelSerializer):
             date=validated_data.get('date'),
             version=validated_data.get('version'),
             is_active=validated_data.get('is_active'),
+            updated_by=validated_data.get('updated_by')
         )
 
         for ci, cat_data in enumerate(categories_data):
@@ -146,7 +152,7 @@ class MenuUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Menu
-        fields = ['id', 'name', 'date', 'version', 'is_active', 'categories']
+        fields = ['id', 'name', 'date', 'version', 'is_active', 'categories', 'updated_by']
 
     # 🔥 FIX: Parse JSON string from FormData
     def to_internal_value(self, data):

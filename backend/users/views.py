@@ -1,21 +1,54 @@
+
+# Third-party
+
+from rest_framework import status, viewsets
 from rest_framework.decorators import api_view
-from rest_framework.permissions import AllowAny
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from .models import User,Profile
-from .serializers import LoginResponseSerializer, userserializer,RegisterSerializer,LoginSerializer
 from rest_framework.views import APIView
-from rest_framework import viewsets
 from rest_framework.filters import SearchFilter
-from rest_framework import status
-from rest_framework.authtoken.models import Token
-from .permissions import IsOwner
 from rest_framework.exceptions import AuthenticationFailed
-from django.db import transaction
+
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema
 
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from dj_rest_auth.registration.views import SocialLoginView
 
+# Local
+from .models import User, Profile
+from .serializers import (
+    LoginResponseSerializer,
+    userserializer,
+    RegisterSerializer,
+    LoginSerializer,
+)
+from .permissions import IsOwner
+# 
+
+class GoogleLoginView(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    client_class  = OAuth2Client
+    callback_url  = "http://localhost:5173" 
+    def get_response(self):
+        response = super().get_response()
+
+        # ✅ Correct user instance
+        user = self.user
+
+        # ✅ Safe token extraction
+        access_token = response.data.get("access") or response.data.get("access_token")
+        refresh_token = response.data.get("refresh") or response.data.get("refresh_token")
+
+        # ✅ Serialize full user (with profile)
+        user_data = userserializer(user).data
+
+        return Response({
+            "access": access_token,
+            "refresh": refresh_token,
+            "user": user_data,
+        }, status=status.HTTP_200_OK)
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]

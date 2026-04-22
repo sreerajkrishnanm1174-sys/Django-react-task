@@ -48,16 +48,26 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
+    'rest_framework',
+    'drf_spectacular',
+    "corsheaders",
+    'rest_framework.authtoken',
+
+    #apps
     'users',
     'Menu',
-    'rest_framework',
-    'rest_framework.authtoken',
-    "corsheaders",
     "orders",
-    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -65,7 +75,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    "corsheaders.middleware.CorsMiddleware",
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -86,6 +96,13 @@ TEMPLATES = [
         },
     },
 ]
+
+
+
+
+
+
+
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
@@ -161,8 +178,48 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+
+
+SITE_ID = 1
+
+REST_AUTH = {
+    'USE_JWT': True,
+    'JWT_AUTH_HTTPONLY': False,   # False so frontend can read the refresh token
+    'TOKEN_MODEL': None,          # disables DRF token, uses JWT only
+}
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# allauth config
+ACCOUNT_LOGIN_METHODS = {'email'}
+
+
+ACCOUNT_SIGNUP_FIELDS = [
+    'email*',
+    'password1*',
+    'password2*',
+    'first_name',
+    'last_name',
+]
+
+# SOCIALACCOUNT_PROVIDERS = {
+#     'google': {
+#         "APP": {
+#             "client_id": "1001892126357-p375g259f7le801860o5b5dgltujgbe7.apps.googleusercontent.com",
+#             "secret":    "your-secret",
+#         },
+#         'SCOPE': ['profile', 'email'],
+#         'AUTH_PARAMS': {'access_type': 'online'},
+#     }
+# }
+
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5173"
 ]
 
 CORS_ALLOW_HEADERS = [

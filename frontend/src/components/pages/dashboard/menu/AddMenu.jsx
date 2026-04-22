@@ -82,7 +82,7 @@ function TableHead() {
 // ── Main ─────────────────────────────────────────────────────────
 export default function AddMenu() {
   const today = new Date().toISOString().split("T")[0];
-  const { token } = userAuthStore();
+  const { token, user } = userAuthStore();
 
   const [menu, setMenu] = useState({ name: "", date: today, version: 1, is_active: true });
   const [categories, setCategories] = useState([
@@ -94,6 +94,7 @@ export default function AddMenu() {
     name: menu.name,
     date: menu.date,
     version: menu.version,
+    updated_by: user?.id,
     categories: categories.map((c) => ({
       name: c.selectedCat?.name ?? "",
       items: c.items.map((item) => ({
@@ -161,6 +162,7 @@ export default function AddMenu() {
     setErrors({});
     const payload = {
       name: menu.name, date: menu.date, version: menu.version, is_active: menu.is_active,
+      updated_by: user?.id,
       categories: categories.map((c, ci) => ({
         name: c.selectedCat?.name ?? "",
         is_new: c.selectedCat?.isNew ?? false,
